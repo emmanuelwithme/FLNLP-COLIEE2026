@@ -20,3 +20,5 @@ __pycache__/
 stage3-4096-encoder-laststep-777/
 #task 2的相關資料
 Legal Case Entailment by Mou/data/task2_2026_prepared
+# test data預測提交結果
+task1_FLNLPLTR.txt

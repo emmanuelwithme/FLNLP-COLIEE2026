@@ -10,6 +10,28 @@ This legal case competition focuses on two aspects of legal information processi
 
 The legal case retrieval task involves reading a new case Q, and extracting supporting cases S1, S2, ... Sn for the decision of Q from the entire case law corpus. Through the document, we will call the supporting cases for the decision of a new case 'noticed cases'.
 
+## Task 1 2026 pipeline
+
+For the 2026 Task 1 workflow, the repo now provides two shell entrypoints:
+
+- `run_ltr_feature_train_valid_test_2026.sh`
+  - Full LightGBM LTR pipeline.
+  - Rebuilds train/valid/test features, retrains the ranker, produces rerank outputs, then runs cutoff search and submission generation.
+  - Use this when features or the model need to be regenerated.
+
+- `run_ltr_cutoff_postprocess_2026.sh`
+  - Post-process only.
+  - Reuses existing `valid_predictions_raw.csv` and `test_predictions_raw.csv`, then runs scope filtering, self-removal, cutoff search, and submission export.
+  - Use this when you only want to re-search cutoff settings without repeating long feature generation and LightGBM training.
+
+The default final submission filename is:
+
+- `task1_FLNLPLTR.txt`
+
+Task 1 implementation details are documented in:
+
+- `Legal Case Retrieval/README.md`
+
 
 ## Results
 

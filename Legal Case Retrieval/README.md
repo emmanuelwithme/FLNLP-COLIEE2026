@@ -61,6 +61,75 @@ The format of feauture data (like ranklib):
 
 Reference: [Link](https://github.com/jiangnanboy/learning_to_rank)
 
+### 2026 LightGBM LTR pipeline
+
+For the current Task 1 workflow, the LightGBM rerank pipeline is implemented in:
+
+- `Legal Case Retrieval/lightgbm/src/trees/ltr_feature_pipeline.py`
+
+This pipeline now supports:
+
+- accelerated feature building with multi-core CPU and batched GPU inference
+- explicit raw-scope or processed-scope filtering
+- post-rerank legal filtering and self-removal
+- validation-only cutoff search
+- final test-time application of the selected cutoff
+
+Two repo-root shell scripts are provided:
+
+- `run_ltr_feature_train_valid_test_2026.sh`
+  - Full pipeline.
+  - Rebuilds train/valid/test features, retrains LightGBM, writes rerank outputs, then runs cutoff post-processing.
+  - This is the slow path because it repeats feature generation.
+
+- `run_ltr_cutoff_postprocess_2026.sh`
+  - Post-process only.
+  - Reuses existing `valid_predictions_raw.csv` and `test_predictions_raw.csv`.
+  - Runs scope filtering, self-removal, cutoff search, best-mode selection, and submission export.
+  - Use this when you only want to re-search cutoff settings.
+
+Typical usage:
+
+```bash
+bash run_ltr_feature_train_valid_test_2026.sh
+```
+
+```bash
+bash run_ltr_cutoff_postprocess_2026.sh
+```
+
+If you want to override the cutoff grid without retraining:
+
+```bash
+COLIEE_LTR_CUTOFF_CONFIG_JSON=/path/to/cutoff_config.json \
+bash run_ltr_cutoff_postprocess_2026.sh
+```
+
+By default, `run_ltr_cutoff_postprocess_2026.sh` uses:
+
+- valid scope: `coliee_dataset/task1/<YEAR>/lht_process/scope_compare/query_candidate_scope_raw_plus0.json`
+- test scope: `coliee_dataset/task1/<YEAR>/lht_process/modernBert/query_candidate_scope_test_raw.json`
+- submission filename: `task1_FLNLPLTR.txt`
+
+The cutoff post-processing module is implemented in:
+
+- `Legal Case Retrieval/lightgbm/src/trees/cutoff_postprocess.py`
+
+It compares three per-query cutoff modes on the same rerank output:
+
+- fixed top-k
+- THUIR-style ratio cutoff `(p, l, h)`
+- largest-gap adaptive cutoff `(N, buffer, l, h)`
+
+The workflow is:
+
+1. read existing validation/test rerank results
+2. apply scope-based filtering and self-removal
+3. search cutoff parameters on validation only
+4. select the best mode and parameters by validation metrics
+5. apply the selected cutoff to test once
+6. write validation comparison tables, test predictions, candidate lists, and submission text
+
 ## Post-processing
 
 `year.py` file is used for generating the JSON file filtering by trial date. Note that this file uses raw documents, which are not included in this folder. Please make sure the necessary documents are provided before running this script.
