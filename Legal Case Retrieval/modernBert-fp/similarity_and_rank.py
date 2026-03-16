@@ -1,6 +1,7 @@
 # 有SFT的模型推論相似度計算
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -12,6 +13,7 @@ from lcr.task1_paths import get_task1_dir, get_task1_year
 
 TASK1_DIR = get_task1_dir()
 TASK1_YEAR = get_task1_year()
+TEST_MODE = os.getenv("LCR_TEST_MODE", "0") == "1"
 
 from lcr.data import EmbeddingsData, load_query_ids
 from lcr.device import get_device
@@ -20,19 +22,44 @@ from lcr.similarity import compute_similarity_and_save
 if __name__ == "__main__":
     _device = get_device()
     model_name = "modernBert_fp_fp16"
-    # candidate 判決書
-    processed_doc_embedding_path = f"{TASK1_DIR}/processed/processed_document_{model_name}_embeddings.pkl"
-    # query 判決書
-    processed_new_doc_embedding_path = f"{TASK1_DIR}/processed_new/processed_new_document_{model_name}_embeddings.pkl"
-    valid_qid_path = f"{TASK1_DIR}/valid_qid.tsv"
-    train_qid_path = f"{TASK1_DIR}/train_qid.tsv"
-    output_dot_train_path = f"{TASK1_DIR}/lht_process/{model_name}/output_{model_name}_dot_train.tsv"
-    output_dot_valid_path = f"{TASK1_DIR}/lht_process/{model_name}/output_{model_name}_dot_valid.tsv"
-    output_cos_valid_path = f"{TASK1_DIR}/lht_process/{model_name}/output_{model_name}_cos_valid.tsv"
-    output_cos_train_path = f"{TASK1_DIR}/lht_process/{model_name}/output_{model_name}_cos_train.tsv"
-    model_scope_path = Path(f"{TASK1_DIR}/lht_process/{model_name}/query_candidate_scope.json")
-    shared_scope_path = Path(f"{TASK1_DIR}/lht_process/modernBert/query_candidate_scope.json")
-    if model_scope_path.exists():
+    if TEST_MODE:
+        processed_doc_embedding_path = f"{TASK1_DIR}/processed_test/processed_test_document_{model_name}_embeddings.pkl"
+        processed_new_doc_embedding_path = f"{TASK1_DIR}/processed_test/processed_test_query_{model_name}_embeddings.pkl"
+        test_qid_path = f"{TASK1_DIR}/test_qid.tsv"
+        output_dot_test_path = f"{TASK1_DIR}/lht_process/{model_name}/output_{model_name}_dot_test.tsv"
+        output_cos_test_path = f"{TASK1_DIR}/lht_process/{model_name}/output_{model_name}_cos_test.tsv"
+        split_to_qid_path = [("test", test_qid_path)]
+        split_metric_to_output = {
+            ("test", "dot"): output_dot_test_path,
+            ("test", "cos"): output_cos_test_path,
+        }
+        model_scope_path = Path(f"{TASK1_DIR}/lht_process/{model_name}/query_candidate_scope_test.json")
+        shared_scope_path = Path(f"{TASK1_DIR}/lht_process/modernBert/query_candidate_scope_test.json")
+        print("⚙️  TEST_MODE 啟用：輸出 test split 排名")
+    else:
+        processed_doc_embedding_path = f"{TASK1_DIR}/processed/processed_document_{model_name}_embeddings.pkl"
+        processed_new_doc_embedding_path = f"{TASK1_DIR}/processed_new/processed_new_document_{model_name}_embeddings.pkl"
+        valid_qid_path = f"{TASK1_DIR}/valid_qid.tsv"
+        train_qid_path = f"{TASK1_DIR}/train_qid.tsv"
+        output_dot_train_path = f"{TASK1_DIR}/lht_process/{model_name}/output_{model_name}_dot_train.tsv"
+        output_dot_valid_path = f"{TASK1_DIR}/lht_process/{model_name}/output_{model_name}_dot_valid.tsv"
+        output_cos_valid_path = f"{TASK1_DIR}/lht_process/{model_name}/output_{model_name}_cos_valid.tsv"
+        output_cos_train_path = f"{TASK1_DIR}/lht_process/{model_name}/output_{model_name}_cos_train.tsv"
+        split_to_qid_path = [("valid", valid_qid_path), ("train", train_qid_path)]
+        split_metric_to_output = {
+            ("valid", "dot"): output_dot_valid_path,
+            ("train", "dot"): output_dot_train_path,
+            ("valid", "cos"): output_cos_valid_path,
+            ("train", "cos"): output_cos_train_path,
+        }
+        model_scope_path = Path(f"{TASK1_DIR}/lht_process/{model_name}/query_candidate_scope.json")
+        shared_scope_path = Path(f"{TASK1_DIR}/lht_process/modernBert/query_candidate_scope.json")
+
+    env_scope_path = os.getenv("LCR_QUERY_CANDIDATE_SCOPE_JSON")
+    if env_scope_path:
+        query_candidate_scope_path = Path(env_scope_path)
+        print(f"🔹 使用環境變數 scope: {query_candidate_scope_path}")
+    elif model_scope_path.exists():
         query_candidate_scope_path = model_scope_path
         print(f"🔹 使用 query candidate scope: {query_candidate_scope_path}")
     elif shared_scope_path.exists():
@@ -43,24 +70,16 @@ if __name__ == "__main__":
         print("⚠️ 將對全部 candidates 計分。")
         query_candidate_scope_path = None
 
-    # 載入 embeddings
     processed_doc_data = EmbeddingsData.load(processed_doc_embedding_path)
-    # [這邊可以設定query是不是要用 processed_new_doc_embedding_path 這是有過濾過後的判決書，預設是用 processed_doc_embedding_path !!!]
+    # 依需求固定使用同一份 embeddings 當作 query 與 candidate。
     processed_new_doc_data = EmbeddingsData.load(processed_doc_embedding_path)
+    print(f"🔹 Query/Candidate embeddings 均使用: {processed_doc_embedding_path}")
 
-    # 載入查詢 ID
-    valid_qids = load_query_ids(valid_qid_path)
-    train_qids = load_query_ids(train_qid_path)
+    split_to_qids = [(split_name, load_query_ids(qid_path)) for split_name, qid_path in split_to_qid_path]
 
-    # 執行 similarity 計算與排序輸出
-    for split_name, qids in [("valid", valid_qids), ("train", train_qids)]:
+    for split_name, qids in split_to_qids:
         for metric in ["dot", "cos"]:
-            output_path = {
-                ("valid", "dot"): output_dot_valid_path,
-                ("train", "dot"): output_dot_train_path,
-                ("valid", "cos"): output_cos_valid_path,
-                ("train", "cos"): output_cos_train_path,
-            }[(split_name, metric)]
+            output_path = split_metric_to_output[(split_name, metric)]
             missing = compute_similarity_and_save(
                 qids,
                 processed_new_doc_data,

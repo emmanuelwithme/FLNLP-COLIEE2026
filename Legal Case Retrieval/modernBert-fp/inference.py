@@ -22,6 +22,7 @@ from find_best_model import find_best_checkpoint
 
 QUICK_TEST = False
 SCOPE_FILTER = True # 使用有依照判決書年份過濾的資料來訓練的模型推論
+TEST_MODE = os.getenv("LCR_TEST_MODE", "0") == "1"
 
 # Shared utilities package (contains reusable helpers for retrieval pipelines)
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
@@ -90,11 +91,18 @@ def encode_batch(batch_inputs):
 # Path to the processed documents
 model_name = "modernBert_fp_fp16" # 有SFT，且SFT是fp16
 print(f"------Using {model_name} to encode documents------\n")
-candidate_dataset_path = f"{TASK1_DIR}/processed"
-query_dataset_path = f"{TASK1_DIR}/processed_new"
 suffix = "_test" if QUICK_TEST else ""
-candidate_output_path = f"{TASK1_DIR}/processed/processed_document_{model_name}_embeddings{suffix}.pkl"
-query_output_path = f"{TASK1_DIR}/processed_new/processed_new_document_{model_name}_embeddings{suffix}.pkl"
+if TEST_MODE:
+    candidate_dataset_path = f"{TASK1_DIR}/processed_test"
+    query_dataset_path = candidate_dataset_path
+    candidate_output_path = f"{TASK1_DIR}/processed_test/processed_test_document_{model_name}_embeddings{suffix}.pkl"
+    query_output_path = f"{TASK1_DIR}/processed_test/processed_test_query_{model_name}_embeddings{suffix}.pkl"
+    print("⚙️  TEST_MODE 啟用：使用 processed_test 作為 candidate/query 語料")
+else:
+    candidate_dataset_path = f"{TASK1_DIR}/processed"
+    query_dataset_path = f"{TASK1_DIR}/processed_new"
+    candidate_output_path = f"{TASK1_DIR}/processed/processed_document_{model_name}_embeddings{suffix}.pkl"
+    query_output_path = f"{TASK1_DIR}/processed_new/processed_new_document_{model_name}_embeddings{suffix}.pkl"
 if QUICK_TEST:
     print("⚙️  QUICK_TEST 模式啟用：使用測試模型與輸出路徑")
 
@@ -119,17 +127,23 @@ print(f"💾 Candidate embeddings saved to {candidate_output_path} ({len(candida
 # Query 資料集處理
 # -------------------------------
 print("--------------------------")
-print(f"\n🔹 Encoding query documents located at {query_dataset_path} ...")
-query_data = process_directory_to_embeddings(
-    query_dataset_path,
-    query_output_path,
-    tokenizer,
-    encode_batch=encode_batch,
-    batch_size=1,
-    max_length=4096,
-    device=device,
-    show_progress=True,
-)
+if TEST_MODE:
+    # test query 與 candidate 同一語料，直接重用 embeddings 以避免重複編碼。
+    query_data = candidate_data
+    query_data.save(query_output_path)
+    print(f"\n🔹 TEST_MODE：query embeddings 重用 candidate embeddings from {candidate_dataset_path}")
+else:
+    print(f"\n🔹 Encoding query documents located at {query_dataset_path} ...")
+    query_data = process_directory_to_embeddings(
+        query_dataset_path,
+        query_output_path,
+        tokenizer,
+        encode_batch=encode_batch,
+        batch_size=1,
+        max_length=4096,
+        device=device,
+        show_progress=True,
+    )
 print(f"💾 Query embeddings saved to {query_output_path} ({len(query_data)} documents)")
 
 print("\n✅ All embeddings saved successfully.")
