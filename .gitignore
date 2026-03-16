@@ -20,3 +20,5 @@ __pycache__/
 stage3-4096-encoder-laststep-777/
 #task 2的相關資料
 Legal Case Entailment by Mou/data/task2_2026_prepared
+# 段落向量融合端到端訓練的環境變數
+!Legal Case Retrieval/modernBert-fp-chunkAgg/.env
