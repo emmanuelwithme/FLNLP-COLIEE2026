@@ -65,6 +65,29 @@ export LCR_QUERY_EMBEDDINGS_PATH=/abs/path/to/query_embeddings.pkl
 export LCR_CANDIDATE_EMBEDDINGS_PATH=/abs/path/to/candidate_embeddings.pkl
 ```
 
+## 建議執行順序（2026）
+
+如果要從 Task 1 原始資料一路跑到最終 submission，建議流程如下：
+
+1. 將 Task 1 原始資料與 labels 放到 `coliee_dataset/task1/<YEAR>/`。
+2. 設定 repo-root `.env`，確認 `COLIEE_TASK1_YEAR` 與 `COLIEE_TASK1_ROOT`。
+3. 執行前處理與 fine-tune 前置流程：
+   `bash run_pre_finetune_2026.sh`
+   這一步會依序建立 `summary`、`processed`、train/valid split、BM25 index / ranking、BM25 hard negatives，以及 `query_candidate_scope.json`。
+4. 訓練 dense encoder：
+   `python "Legal Case Retrieval/modernBert-fp/fine_tune/fine_tune.py"`
+5. 跑 train/valid 端檢查與排名輸出：
+   `bash run_train_valid_inference_eval_2026.sh`
+6. 若要先做 retrieval-only test submission：
+   `bash run_test_retrieval_2026.sh`
+7. 若要跑完整 LightGBM rerank + submission：
+   `bash run_ltr_feature_train_valid_test_2026.sh`
+   這一步現在只做 LTR，並在 test 端輸出 fixed top-5 submission，不會做 cutoff grid search。
+   預設會另外複製一份 baseline submission 到 repo root：`task1_FLNLPLTRTOP5.txt`
+8. 若已有 rerank 輸出，只想重做 cutoff 後處理：
+   `bash run_ltr_cutoff_postprocess_2026.sh`
+   這一步會重用既有的 `valid_predictions_raw.csv` / `test_predictions_raw.csv`，做唯一一次 cutoff grid search，並輸出最後的 test submission。
+
 
 ## Traditional Lexical Matching Models
 
@@ -84,22 +107,11 @@ The implementation and checkpoint of SAILER can be viewed at [SAILER](https://gi
 
 `lightgbm` directory provides the implementation of Lightgbm.
 
-python lgb_ltr.py -process process feauture data to feat.txt and group.txt
-
-python lgb_ltr.py -train
-
-python lgb_ltr.py -predict
-
-The format of feauture data (like ranklib):
-0 qid:10002 1:0.007477 2:0.000000 ... 45:0.000000 46:0.007042 
-
-Reference: [Link](https://github.com/jiangnanboy/learning_to_rank)
-
 ### 2026 LightGBM LTR pipeline
 
 For the current Task 1 workflow, the LightGBM rerank pipeline is implemented in:
 
-- `Legal Case Retrieval/lightgbm/src/trees/ltr_feature_pipeline.py`
+- `Legal Case Retrieval/lightgbm/ltr_feature_pipeline.py`
 
 This pipeline now supports:
 
@@ -112,15 +124,17 @@ This pipeline now supports:
 Two repo-root shell scripts are provided:
 
 - `run_ltr_feature_train_valid_test_2026.sh`
-  - Full pipeline.
-  - Rebuilds train/valid/test features, retrains LightGBM, writes rerank outputs, then runs cutoff post-processing.
+  - LightGBM LTR pipeline.
+  - Rebuilds train/valid/test features, retrains LightGBM, writes rerank outputs, then exports a fixed top-k test submission.
+  - The repo-root wrapper `run_ltr_feature_train_valid_test_2026.sh` currently fixes this to top-5 and skips cutoff grid search on purpose.
   - This is the slow path because it repeats feature generation.
 
 - `run_ltr_cutoff_postprocess_2026.sh`
   - Post-process only.
   - Reuses existing `valid_predictions_raw.csv` and `test_predictions_raw.csv`.
   - Runs scope filtering, self-removal, cutoff search, best-mode selection, and submission export.
-  - Use this when you only want to re-search cutoff settings.
+  - It also writes `best_overall/test_submission_best_mode.txt` and, by default, copies that file to repo root as `task1_FLNLPLTR.txt`.
+  - Use this when you want the only cutoff grid search in the workflow and the final test submission.
 
 Typical usage:
 
@@ -128,9 +142,19 @@ Typical usage:
 bash run_ltr_feature_train_valid_test_2026.sh
 ```
 
+This writes a fixed top-5 baseline submission to:
+
+- `coliee_dataset/task1/<YEAR>/lht_process/lightgbm_ltr_scope_raw/fixed_top5/test_submission_fixed_topk.txt`
+- repo root copy: `task1_FLNLPLTRTOP5.txt`
+
 ```bash
 bash run_ltr_cutoff_postprocess_2026.sh
 ```
+
+This writes the final cutoff-searched submission to:
+
+- `coliee_dataset/task1/<YEAR>/lht_process/lightgbm_ltr_scope_raw/cutoff_search/best_overall/test_submission_best_mode.txt`
+- repo root copy: `task1_FLNLPLTR.txt`
 
 If you want to override the cutoff grid without retraining:
 
@@ -143,11 +167,12 @@ By default, `run_ltr_cutoff_postprocess_2026.sh` uses:
 
 - valid scope: `coliee_dataset/task1/<YEAR>/lht_process/scope_compare/query_candidate_scope_raw_plus0.json`
 - test scope: `coliee_dataset/task1/<YEAR>/lht_process/modernBert/query_candidate_scope_test_raw.json`
+- cutoff config: prefer `coliee_dataset/task1/<YEAR>/lht_process/lightgbm_ltr_scope_raw/cutoff_search_expanded_config.json` if that file exists; otherwise use the built-in defaults in `cutoff_postprocess.py`
 - submission filename: `task1_FLNLPLTR.txt`
 
 The cutoff post-processing module is implemented in:
 
-- `Legal Case Retrieval/lightgbm/src/trees/cutoff_postprocess.py`
+- `Legal Case Retrieval/lightgbm/cutoff_postprocess.py`
 
 It compares three per-query cutoff modes on the same rerank output:
 
@@ -163,35 +188,6 @@ The workflow is:
 4. select the best mode and parameters by validation metrics
 5. apply the selected cutoff to test once
 6. write validation comparison tables, test predictions, candidate lists, and submission text
-
-## Post-processing
-
-`year.py` file is used for generating the JSON file filtering by trial date. Note that this file uses raw documents, which are not included in this folder. Please make sure the necessary documents are provided before running this script.
-
-For modern `lcr` pipelines, you can move this logic into pre-filtered retrieval by setting env `LCR_QUERY_CANDIDATE_SCOPE_JSON=/path/to/query_candidate_scope.json`. Then both training-time retrieval (`generate_similarity_artifacts`) and inference-time ranking (`compute_similarity_and_save`) only score candidates in each query's scope.
-
-`grid_search.py` file is used for searching the hyperparameters (p, l, h), where `p` denotes the truncation percentage relative to the highest score, `l` denotes the minimum number of answers, and `h` denotes the maximum number of answers. This file requires two JSON files: one for year filtering and another for score results.
-
-`inference.py` file is used for generating the JSON file of test set results with customizable hyperparameters. Like `grid_search.py`, this file requires two JSON files for year filtering and score results.
-
-Files with prefix "score" in the folder are score result files in the following format: 
-
-```json
-{
-	"query_id1": {
-		"doc_id1": {
-			"score": _score1,
-			"rank": _rank1
-		}, 
-		"doc_id2": {
-			"score": _score2,
-			"rank": _rank2
-		}, 
-		...
-	},
-	...
-}
-```
 
 
 ## utils

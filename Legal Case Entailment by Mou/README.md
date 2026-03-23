@@ -50,6 +50,20 @@ The script automatically:
 
 Edit `.env` once, then run without extra CLI arguments.
 
+## 建議執行順序
+
+建議優先使用一鍵流程：
+
+1. 先將 Task 2 原始資料與 labels 放到 `coliee_dataset/task2/task2_train_files_<YEAR>/`
+2. 設定 repo-root `.env`
+3. 執行 `bash run_task2_finetune.sh`
+
+若要手動分步執行：
+
+1. `python "Legal Case Entailment by Mou/prepare_task2_paragraph_data.py"`
+2. `python "Legal Case Entailment by Mou/analyze_task2_stats.py"`（可選）
+3. `python "Legal Case Entailment by Mou/fine_tune_task2.py"`
+
 ## Test mode
 
 Set in `.env`:

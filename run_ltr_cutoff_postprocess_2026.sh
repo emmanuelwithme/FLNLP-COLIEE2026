@@ -108,7 +108,7 @@ if [[ -n "${CUTOFF_CONFIG_RESOLVED}" ]]; then
 fi
 
 run_step "Run LTR cutoff postprocess only" \
-  python "Legal Case Retrieval/lightgbm/src/trees/cutoff_postprocess.py" \
+  python "Legal Case Retrieval/lightgbm/cutoff_postprocess.py" \
   "${CUTOFF_ARGS[@]}"
 
 require_nonempty_file "${CUTOFF_OUTPUT_DIR}/cutoff_summary.json"

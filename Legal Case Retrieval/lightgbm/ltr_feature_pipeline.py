@@ -24,14 +24,14 @@ from tqdm import tqdm
 from transformers import AutoTokenizer
 
 # Make `lcr` package importable.
-PACKAGE_ROOT = Path(__file__).resolve().parents[3]
+PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 if str(PACKAGE_ROOT) not in sys.path:
     sys.path.insert(0, str(PACKAGE_ROOT))
 
 from lcr.data import EmbeddingsData
 from lcr.device import get_device
 from lcr.task1_paths import get_task1_dir, get_task1_year
-from cutoff_postprocess import build_cutoff_config, run_cutoff_postprocess
+from cutoff_postprocess import build_cutoff_config, run_cutoff_postprocess, run_fixed_topk_postprocess
 
 # Reuse existing ModernBERT contrastive model class (core inference logic unchanged).
 FP_FINE_TUNE_DIR = PACKAGE_ROOT / "modernBert-fp" / "fine_tune"
@@ -1968,32 +1968,71 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--dense-batch-size",
         type=int,
-        default=16 if has_cuda else 8,
+        default=24 if has_cuda else 8,
         help="Batch size for dense encoder inference (query/doc chunk encoding).",
     )
     parser.add_argument(
         "--chunk-warmup-case-batch-size",
         type=int,
-        default=128,
+        default=256,
         help="How many cases to queue before flushing batched chunk-embedding precompute.",
     )
     parser.add_argument(
         "--feature-score-batch-size",
         type=int,
-        default=4096 if has_cuda else 2048,
+        default=8192 if has_cuda else 2048,
         help="Candidate batch size for vectorized dense/chunk similarity feature computation.",
     )
     parser.add_argument(
         "--lgbm-device",
         type=str,
-        default="auto",
+        default="cuda",
         choices=["auto", "cpu", "gpu", "cuda"],
-        help="LightGBM training device. `auto` tries cuda/gpu and falls back to cpu.",
+        help="LightGBM training device. Default: cuda.",
     )
     parser.add_argument(
         "--skip-cutoff-search",
         action="store_true",
         help="Skip validation cutoff search / test cutoff application stage.",
+    )
+    parser.add_argument(
+        "--skip-fixed-topk-export",
+        action="store_true",
+        help="Skip fixed top-k export for test predictions.",
+    )
+    parser.add_argument(
+        "--fixed-topk-output-dir",
+        type=Path,
+        default=None,
+        help="Optional output directory for fixed top-k artifacts. Default: <output-dir>/fixed_top5",
+    )
+    parser.add_argument(
+        "--fixed-topk-k",
+        type=int,
+        default=5,
+        help="Fixed top-k cutoff to export for test predictions. Default: 5",
+    )
+    parser.add_argument(
+        "--fixed-topk-keep-self",
+        action="store_true",
+        help="Disable self-removal in fixed top-k export.",
+    )
+    parser.add_argument(
+        "--fixed-topk-no-submission",
+        action="store_true",
+        help="Skip writing fixed top-k submission files.",
+    )
+    parser.add_argument(
+        "--fixed-topk-submission-run-tag",
+        type=str,
+        default="lgbm_top5",
+        help="Run tag for fixed top-k submission output.",
+    )
+    parser.add_argument(
+        "--fixed-topk-final-submission-path",
+        type=Path,
+        default=None,
+        help="Optional copy target for the fixed top-k submission file.",
     )
     parser.add_argument(
         "--cutoff-output-dir",
@@ -2443,6 +2482,33 @@ def main() -> None:
         valid_scope=train_valid_scope,
         test_scope=test_scope,
     )
+
+    if not args.skip_fixed_topk_export:
+        fixed_topk_output_dir = args.fixed_topk_output_dir or (args.output_dir / f"fixed_top{args.fixed_topk_k}")
+        test_pred_input = args.output_dir / "test_predictions_raw.csv"
+        if not test_pred_input.exists():
+            test_pred_input = args.output_dir / "test_predictions.csv"
+
+        logger.info("Running fixed top-%d export...", args.fixed_topk_k)
+        fixed_topk_summary = run_fixed_topk_postprocess(
+            test_predictions_path=test_pred_input,
+            test_scope=test_scope,
+            output_dir=fixed_topk_output_dir,
+            logger=logger,
+            k=args.fixed_topk_k,
+            test_query_ids=test_qids,
+            remove_self=not args.fixed_topk_keep_self,
+            write_submission=not args.fixed_topk_no_submission,
+            submission_run_tag=args.fixed_topk_submission_run_tag,
+            final_submission_path=args.fixed_topk_final_submission_path,
+        )
+        logger.info(
+            "Fixed top-%d export complete: summary=%s",
+            args.fixed_topk_k,
+            fixed_topk_output_dir / "fixed_topk_summary.json",
+        )
+        if "final_submission_path" in fixed_topk_summary:
+            logger.info("Fixed top-%d copied submission: %s", args.fixed_topk_k, fixed_topk_summary["final_submission_path"])
 
     if not args.skip_cutoff_search:
         cutoff_output_dir = args.cutoff_output_dir or (args.output_dir / "cutoff_search")

@@ -4,6 +4,7 @@ import argparse
 import itertools
 import json
 import logging
+import shutil
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, Sequence
@@ -1008,6 +1009,99 @@ def run_cutoff_postprocess(
         float(best_row["precision"]),
         float(best_row["recall"]),
         float(best_row["ndcg_at_10"]),
+    )
+    return summary_payload
+
+
+def run_fixed_topk_postprocess(
+    *,
+    test_predictions_path: Path,
+    test_scope: Mapping[str, Sequence[str]] | None,
+    output_dir: Path,
+    logger: logging.Logger,
+    k: int,
+    test_query_ids: Sequence[str] | None = None,
+    remove_self: bool = True,
+    write_submission: bool = True,
+    submission_run_tag: str = "lgbm_top5",
+    final_submission_path: Path | None = None,
+) -> dict[str, Any]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    test_df_raw = load_rerank_predictions(test_predictions_path, has_label=False)
+    test_filtered_df, test_filter_stats, inferred_test_qids = apply_common_legal_filters(
+        test_df_raw,
+        scope=test_scope,
+        remove_self=remove_self,
+        split_name="test",
+        logger=logger,
+    )
+
+    test_qids = [normalize_case_id(qid) for qid in (test_query_ids or inferred_test_qids)]
+    test_filtered_path = output_dir / "test_predictions_legal_filtered.csv"
+    test_filtered_df.to_csv(test_filtered_path, index=False)
+
+    test_rankings = build_query_rankings(
+        test_filtered_df,
+        all_query_ids=test_qids,
+        has_label=False,
+    )
+
+    fixed_k = max(int(k), 0)
+    selected_k = {
+        ranking.query_id: min(fixed_k, ranking.size)
+        for ranking in test_rankings
+    }
+    metrics, test_query_stats = _evaluate_k_predictions(test_rankings, selected_k)
+    test_predictions = _build_selected_prediction_frame(test_rankings, selected_k)
+
+    test_predictions_path_out = output_dir / "test_predictions_fixed_topk.csv"
+    test_query_stats_path = output_dir / "test_query_stats_fixed_topk.csv"
+    test_candidates_path = output_dir / "test_candidates_fixed_topk.json"
+    test_predictions.to_csv(test_predictions_path_out, index=False)
+    test_query_stats.to_csv(test_query_stats_path, index=False)
+    _write_candidate_json(test_predictions, test_candidates_path)
+
+    submission_path: Path | None = None
+    if write_submission:
+        submission_path = output_dir / "test_submission_fixed_topk.txt"
+        build_submission_from_cutoff_results(
+            test_predictions,
+            output_path=submission_path,
+            run_tag=submission_run_tag,
+            query_order=test_qids,
+        )
+        if final_submission_path is not None:
+            final_submission_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(submission_path, final_submission_path)
+
+    summary_payload = {
+        "config": {
+            "k": fixed_k,
+            "remove_self": remove_self,
+            "write_submission": write_submission,
+            "submission_run_tag": submission_run_tag,
+        },
+        "test_filter_stats": test_filter_stats,
+        "test_predictions_path": str(test_predictions_path_out),
+        "test_query_stats_path": str(test_query_stats_path),
+        "test_candidates_path": str(test_candidates_path),
+        "metrics": metrics,
+    }
+    if submission_path is not None:
+        summary_payload["submission_path"] = str(submission_path)
+    if final_submission_path is not None and submission_path is not None:
+        summary_payload["final_submission_path"] = str(final_submission_path)
+
+    summary_path = output_dir / "fixed_topk_summary.json"
+    summary_path.write_text(json.dumps(summary_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    logger.info(
+        "Fixed top-%d postprocess complete: predictions=%s submission=%s summary=%s",
+        fixed_k,
+        test_predictions_path_out,
+        submission_path if submission_path is not None else "<disabled>",
+        summary_path,
     )
     return summary_payload
 
