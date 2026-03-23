@@ -1,6 +1,6 @@
 # FLNLP-COLIEE2026
 
-This repository is the FLNLP working codebase for COLIEE 2026 Task 1 and Task 2. The project was bootstrapped from a public upstream 2023 codebase and has been updated for the current repo name, paths, scripts, and 2026 workflows.
+This repository is the FLNLP working codebase for COLIEE 2026 Task 1 and Task 2.
 
 ## Task 1: Legal Case Retrieval
 
@@ -100,6 +100,8 @@ Task 2 若要從原始資料開始，請使用 `Legal Case Entailment by Mou/` �
 Use the official COLIEE dataset access process for the corresponding competition year. Keep Task 1 and Task 2 raw data under `./coliee_dataset/` or override the dataset roots in `.env`.
 
 ## Upstream References
+
+This project was started from THUIR COLIEE 2023 (https://github.com/CSHaitao/THUIR-COLIEE2023) and has since been extensively refactored and rewritten across training, inference, and overall code structure.
 
 The following papers are the original upstream references retained from the public THUIR code release:
 
