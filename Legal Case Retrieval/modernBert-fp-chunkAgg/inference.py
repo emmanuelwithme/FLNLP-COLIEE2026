@@ -194,6 +194,7 @@ def main() -> None:
 
     suffix = "_test" if QUICK_TEST else ""
     # 中文註解：可用 env 覆寫輸入資料夾，方便切換不同預處理版本。
+    # 中文註解：預設仍會同時編碼 processed 與 processed_new，供後續 similarity 自行選擇。
     candidate_dataset_path = Path(os.getenv("TASK1_CHUNKAGG_CANDIDATE_DIR", f"{TASK1_DIR}/processed"))
     query_dataset_path = Path(os.getenv("TASK1_CHUNKAGG_QUERY_DIR", f"{TASK1_DIR}/processed_new"))
     candidate_output_path = Path(
@@ -208,6 +209,7 @@ def main() -> None:
             f"{TASK1_DIR}/processed_new/processed_new_document_{MODEL_NAME}_embeddings{suffix}.pkl",
         )
     )
+    print("🔹 推論會同時輸出 processed 與 processed_new 兩份 embeddings。")
 
     print("--------------------------")
     print(f"\n🔹 Encoding candidate documents located at {candidate_dataset_path} ...")

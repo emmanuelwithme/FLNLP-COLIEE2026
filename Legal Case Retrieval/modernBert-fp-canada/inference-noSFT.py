@@ -71,6 +71,7 @@ def main() -> None:
     query_output_path = Path(f"{TASK1_DIR}/processed_new/processed_new_document_{MODEL_NAME}_embeddings{suffix}.pkl")
 
     print("------Using continued-pretrained ModernBERT to encode documents------\n")
+    print("🔹 推論會同時輸出 processed 與 processed_new 兩份 embeddings。")
 
     # Candidate
     print("--------------------------")

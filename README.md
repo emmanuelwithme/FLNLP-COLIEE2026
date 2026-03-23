@@ -1,75 +1,70 @@
+# FLNLP-COLIEE2026
 
-# THUIR-COLIEE2023
-This repository presents the code of THUIR team in COLIEE2023 Task 1 and Task 2. Details can be found in the relevant papers.
+This repository is the FLNLP working codebase for COLIEE 2026 Task 1 and Task 2. The project was bootstrapped from a public upstream 2023 codebase and has been updated for the current repo name, paths, scripts, and 2026 workflows.
 
-In task 1 Legal Case Retrieval, THUIR won the championship [paper](https://arxiv.org/abs/2305.06812). In task 2 Legal Case Entailment, THUIR received the third place [paper](https://arxiv.org/abs/2305.06817).
+## Task 1: Legal Case Retrieval
 
-# Task 1: Legal Case Retrieval
+Task 1 focuses on retrieving supporting cases for a new case from the legal case corpus.
 
-This legal case competition focuses on two aspects of legal information processing related to a database of predominantly Federal Court of Canada case laws, provided by Compass Law.
+Main 2026 entrypoints:
 
-The legal case retrieval task involves reading a new case Q, and extracting supporting cases S1, S2, ... Sn for the decision of Q from the entire case law corpus. Through the document, we will call the supporting cases for the decision of a new case 'noticed cases'.
-
-## Task 1 2026 pipeline
-
-For the 2026 Task 1 workflow, the repo now provides two shell entrypoints:
+- `python "Legal Case Retrieval/modernBert-fp/fine_tune/fine_tune.py"`
+  - Task 1 ModernBERT-FP contrastive fine-tuning entrypoint.
+  - Uses the Task 1 dataset configured in repo-root `.env`.
 
 - `run_ltr_feature_train_valid_test_2026.sh`
   - Full LightGBM LTR pipeline.
-  - Rebuilds train/valid/test features, retrains the ranker, produces rerank outputs, then runs cutoff search and submission generation.
-  - Use this when features or the model need to be regenerated.
+  - Rebuilds train/valid/test features, retrains the ranker, writes rerank outputs, then runs cutoff search and submission generation.
 
 - `run_ltr_cutoff_postprocess_2026.sh`
   - Post-process only.
-  - Reuses existing `valid_predictions_raw.csv` and `test_predictions_raw.csv`, then runs scope filtering, self-removal, cutoff search, and submission export.
-  - Use this when you only want to re-search cutoff settings without repeating long feature generation and LightGBM training.
+  - Reuses existing rerank outputs and only reruns scope filtering, self-removal, cutoff search, and submission export.
 
-The default final submission filename is:
+Default submission filename:
 
 - `task1_FLNLPLTR.txt`
 
-Task 1 implementation details are documented in:
+Task 1 embedding convention:
+
+- inference scripts keep generating both `processed` and `processed_new` document embeddings
+- similarity scripts now default to `processed` for both query and candidate
+- the old THUIR setting (`processed_new` as query) is still available via embedding-selection env vars documented in `Legal Case Retrieval/README.md`
+
+Detailed Task 1 documentation:
 
 - `Legal Case Retrieval/README.md`
 
+## Task 2: Legal Case Entailment
 
-## Results
+Task 2 identifies the paragraph in a relevant case that entails the decision of a new case.
 
-|  Team  |    Submission     | Precision | Recall | F1 score |
-| :----: | :---------------: | :-------: | :----: | :------: |
-| THUIR  |     thuirrun2     |  0.2379   | 0.4063 |  0.3001  |
-| THUIR  |     thuirrun3     |  0.2173   | 0.4389 |  0.2907  |
-| IITDLI | iitdli_task1_run3 |  0.2447   | 0.3481 |  0.2874  |
-| THUIR  |     thuirrun1     |  0.2186   | 0.3782 |  0.2771  |
-|  NOWJ  |  nowj.d-ensemble  |  0.2263   | 0.3527 |  0.2757  |
+Status note:
 
+- `Legal Case Entailment/` is a legacy upstream folder.
+- It has not been fully migrated or repaired for the current repo, so code under that folder should be treated as not runnable as-is.
+- The current maintained Task 2 workflow is under `Legal Case Entailment by Mou/` and the repo-root `run_task2_finetune.sh`.
 
+Main 2026 entrypoints:
 
-# Task 2: Legal Case Entailment
+- `run_task2_finetune.sh`
+  - Loads repo-root `.env`
+  - Activates the configured conda environment
+  - Prepares paragraph-level Task 2 data
+  - Optionally generates dataset statistics
+  - Runs ModernBERT fine-tuning
 
-This task involves the identification of a paragraph from existing cases that entails the decision of a new case.
+Detailed Task 2 documentation:
 
-Given a decision Q of a new case and a relevant case R, a specific paragraph that entails the decision Q needs to be identified. We confirmed that the answer paragraph can not be identified merely by information retrieval techniques using some examples. Because the case R is a relevant case to Q, many paragraphs in R can be relevant to Q regardless of entailment.
-
-This task requires one to identify a paragraph which entails the decision of Q, so a specific entailment method is required which compares the meaning of each paragraph in R and Q in this task.
-
-## Results
-
-|  Team   |    Submission    | Precision | Recall | F1 score |
-| :-----: | :--------------: | :-------: | :----: | :------: |
-| CAPTAIN |     mt5l-ed      |  0.7870   | 0.7083 |  0.7456  |
-| CAPTAIN |     mt5l-ed4     |  0.7864   | 0.6750 |  0.7265  |
-|  THUIR  |   thuir-monot5   |  0.7900   | 0.6583 |  0.7182  |
-| CAPTAIN |     mt5l-e2      |  0.7596   | 0.6583 |  0.7054  |
-|  THUIR  | thuir-ensemble_2 |  0.7315   | 0.6583 |  0.6930  |
-
-
-
+- `Legal Case Entailment/README.md`
+- `Legal Case Entailment by Mou/README.md`
 
 ## Dataset
 
-Please visit [COLIEE 2023](https://sites.ualberta.ca/~rabelo/COLIEE2023/) to apply for the whole dataset.
+Use the official COLIEE dataset access process for the corresponding competition year. Keep Task 1 and Task 2 raw data under `./coliee_dataset/` or override the dataset roots in `.env`.
 
+## Upstream References
+
+The following papers are the original upstream references retained from the public THUIR code release:
 
 ## Citation
 ```
@@ -104,9 +99,3 @@ Please visit [COLIEE 2023](https://sites.ualberta.ca/~rabelo/COLIEE2023/) to app
       primaryClass={cs.CL}
 }
 ```
-
-## Contact
-
-If you find our work useful, please do not save your star!
-
-If you have any questions, please email liht22@mails.tsinghua.edu.cn

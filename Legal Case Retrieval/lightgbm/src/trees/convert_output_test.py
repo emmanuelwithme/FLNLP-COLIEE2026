@@ -3,7 +3,7 @@ Author: lihaitao
 Date: 2023-04-19 15:21:57
 LastEditors: Do not edit
 LastEditTime: 2023-04-19 15:21:58
-FilePath: /Coliee2023/THUIR-COLIEE2023/Legal Case Retrieval/lightgbm/src/trees/convert_output_test.py
+FilePath: /FLNLP-COLIEE2026/Legal Case Retrieval/lightgbm/src/trees/convert_output_test.py
 '''
 import json
 

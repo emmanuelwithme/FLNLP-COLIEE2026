@@ -76,8 +76,8 @@ def encode_batch(batch_inputs):
     return model.encode(batch_inputs)
 
 # Path to the processed documents
-# ppp是測試的資料夾，之後正式版可以刪除
-# processed_new資料夾底下的文檔是前處理只取引用前後句。在原論文中用做query。processed在原論文中用做candidate。
+# 這裡固定同時編碼 processed 與 processed_new。
+# processed_new 保留給 THUIR-style query 實驗使用；目前本 repo 的 similarity 預設 query / candidate 都使用 processed。
 model_name = "modernBert"
 print(f"------Using {model_name} to encode documents------\n")
 candidate_dataset_path = f"{TASK1_DIR}/processed"
@@ -87,6 +87,7 @@ candidate_output_path = f"{TASK1_DIR}/processed/processed_document_{model_name}_
 query_output_path = f"{TASK1_DIR}/processed_new/processed_new_document_{model_name}_embeddings{suffix}.pkl"
 if QUICK_TEST:
     print("⚙️  QUICK_TEST 模式啟用：使用測試模型與輸出路徑")
+print("🔹 推論會同時輸出 processed 與 processed_new 兩份 embeddings。")
 
 # -------------------------------
 # Candidate 資料集處理

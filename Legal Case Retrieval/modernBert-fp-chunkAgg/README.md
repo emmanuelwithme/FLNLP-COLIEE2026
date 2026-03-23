@@ -24,6 +24,11 @@
 8. 經過 1-layer pre-norm transformer block 融合
 9. 取 `[DOC]` token 當最終文件向量並做 L2 normalize
 
+目前預設行為：
+- `inference.py` 會同時產生 `processed` 與 `processed_new` 兩份 embeddings
+- `similarity_and_rank.py` 預設 query / candidate 都使用 `processed`
+- 若要切回 THUIR-style query，可把 query embeddings 改成 `processed_new`
+
 ## `.env`
 這個目錄下的 `.env` 會被以下程式自動讀取：
 - `fine_tune/fine_tune.py`
@@ -67,6 +72,8 @@
 - `TASK1_CHUNKAGG_MODEL_NAME`：embeddings 檔名與 ranking 輸出資料夾名稱
 - `TASK1_CHUNKAGG_CANDIDATE_DIR`
 - `TASK1_CHUNKAGG_QUERY_DIR`
+- `TASK1_CHUNKAGG_CAND_EMB_SOURCE`：`processed` 或 `processed_new`，ranking 預設 `processed`
+- `TASK1_CHUNKAGG_QUERY_EMB_SOURCE`：`processed` 或 `processed_new`，ranking 預設 `processed`
 - `TASK1_CHUNKAGG_CAND_EMB_PATH`
 - `TASK1_CHUNKAGG_QUERY_EMB_PATH`
 - `TASK1_CHUNKAGG_SCOPE_PATH`
@@ -98,6 +105,13 @@ bash "Legal Case Retrieval/modernBert-fp-chunkAgg/run_infer.sh"
 
 ### 3. 產生排名
 ```bash
+bash "Legal Case Retrieval/modernBert-fp-chunkAgg/run_rank.sh"
+```
+
+若要把 query 改回 `processed_new`：
+
+```bash
+TASK1_CHUNKAGG_QUERY_EMB_SOURCE=processed_new \
 bash "Legal Case Retrieval/modernBert-fp-chunkAgg/run_rank.sh"
 ```
 

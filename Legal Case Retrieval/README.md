@@ -31,6 +31,40 @@ Example:
 - `2025` -> `./coliee_dataset/task1/2025`
 - `2026` -> `./coliee_dataset/task1/2026`
 
+## Embedding convention
+
+For the current FLNLP Task 1 setup:
+
+- inference scripts still encode and save both `processed` and `processed_new`
+- similarity / ranking scripts default to `processed` for both query and candidate
+- the original THUIR paper setting used `processed_new` as query embeddings
+- this repo now defaults to `processed` as query embeddings, while candidates also default to `processed`
+
+Default embedding files:
+
+- `processed`: `${TASK1_DIR}/processed/processed_document_<MODEL_NAME>_embeddings.pkl`
+- `processed_new`: `${TASK1_DIR}/processed_new/processed_new_document_<MODEL_NAME>_embeddings.pkl`
+
+For most similarity scripts, you can switch the source without editing code:
+
+```bash
+export LCR_QUERY_EMBED_SOURCE=processed_new
+export LCR_CANDIDATE_EMBED_SOURCE=processed
+python "Legal Case Retrieval/modernBert/similarity_and_rank.py"
+```
+
+Accepted values:
+
+- `LCR_QUERY_EMBED_SOURCE`: `processed` or `processed_new`
+- `LCR_CANDIDATE_EMBED_SOURCE`: `processed` or `processed_new`
+
+If you need a completely custom file, you can override the path directly:
+
+```bash
+export LCR_QUERY_EMBEDDINGS_PATH=/abs/path/to/query_embeddings.pkl
+export LCR_CANDIDATE_EMBEDDINGS_PATH=/abs/path/to/candidate_embeddings.pkl
+```
+
 
 ## Traditional Lexical Matching Models
 
@@ -118,7 +152,7 @@ The cutoff post-processing module is implemented in:
 It compares three per-query cutoff modes on the same rerank output:
 
 - fixed top-k
-- THUIR-style ratio cutoff `(p, l, h)`
+- ratio cutoff `(p, l, h)`
 - largest-gap adaptive cutoff `(N, buffer, l, h)`
 
 The workflow is:

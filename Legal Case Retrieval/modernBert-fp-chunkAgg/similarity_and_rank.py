@@ -20,6 +20,10 @@ TASK1_YEAR = get_task1_year()
 
 from lcr.data import EmbeddingsData, load_query_ids
 from lcr.device import get_device
+from lcr.embedding_selection import (
+    log_task1_embedding_choices,
+    select_task1_embedding_path,
+)
 from lcr.similarity import compute_similarity_and_save
 
 # 中文註解：TASK1_CHUNKAGG_MODEL_NAME 需與 inference.py 產出的 embeddings 檔名一致。
@@ -76,9 +80,29 @@ if __name__ == "__main__":
         print("⚠️ 將對全部 candidates 計分。")
         query_candidate_scope_path = None
 
-    processed_doc_data = EmbeddingsData.load(processed_doc_embedding_path)
-    # 中文註解：query 端同樣使用 chunkAgg encoder 產生的 embeddings。
-    processed_new_doc_data = EmbeddingsData.load(processed_new_doc_embedding_path)
+    query_selection = select_task1_embedding_path(
+        role="query",
+        processed_path=processed_doc_embedding_path,
+        processed_new_path=processed_new_doc_embedding_path,
+        source_env_names=("TASK1_CHUNKAGG_QUERY_EMB_SOURCE", "LCR_QUERY_EMBED_SOURCE"),
+        path_env_names=("TASK1_CHUNKAGG_QUERY_EMB_PATH", "LCR_QUERY_EMBEDDINGS_PATH"),
+    )
+    candidate_selection = select_task1_embedding_path(
+        role="candidate",
+        processed_path=processed_doc_embedding_path,
+        processed_new_path=processed_new_doc_embedding_path,
+        source_env_names=("TASK1_CHUNKAGG_CAND_EMB_SOURCE", "LCR_CANDIDATE_EMBED_SOURCE"),
+        path_env_names=("TASK1_CHUNKAGG_CAND_EMB_PATH", "LCR_CANDIDATE_EMBEDDINGS_PATH"),
+    )
+    log_task1_embedding_choices(
+        processed_path=processed_doc_embedding_path,
+        processed_new_path=processed_new_doc_embedding_path,
+        query_selection=query_selection,
+        candidate_selection=candidate_selection,
+    )
+
+    query_doc_data = EmbeddingsData.load(query_selection.path)
+    candidate_doc_data = EmbeddingsData.load(candidate_selection.path)
 
     valid_qids = load_query_ids(valid_qid_path)
     train_qids = load_query_ids(train_qid_path)
@@ -93,8 +117,8 @@ if __name__ == "__main__":
             }[(split_name, metric)]
             missing = compute_similarity_and_save(
                 qids,
-                processed_new_doc_data,
-                processed_doc_data,
+                query_doc_data,
+                candidate_doc_data,
                 output_path,
                 metric=metric,
                 run_tag=f"{MODEL_NAME}_{metric}",
