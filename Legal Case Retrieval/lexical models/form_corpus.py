@@ -15,8 +15,10 @@ from lcr.task1_paths import get_task1_dir
 TASK1_DIR = get_task1_dir()
 
 # 定義路徑
-raw_path = f"{TASK1_DIR}/processed"
-file_dir = os.listdir(raw_path)
+raw_path = Path(f"{TASK1_DIR}/processed")
+file_dir = sorted(
+    [p for p in raw_path.iterdir() if p.is_file() and p.suffix.lower() == ".txt"]
+)
 
 # 定義目標資料夾
 output_dir = f"{TASK1_DIR}/lht_process/BM25/corpus"
@@ -28,7 +30,7 @@ os.chmod(output_dir, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 print(f"✅ 目標資料夾 {output_dir} 已建立並設定適當權限")
 
 
-outfile = open(f'{output_dir}/corpus.json','w', encoding='utf-8')  
+outfile = open(f'{output_dir}/corpus.json','w', encoding='utf-8')
 
 # for a_file in file_dir:
 #     pid = a_file.split('.')[0]
@@ -49,23 +51,31 @@ outfile = open(f'{output_dir}/corpus.json','w', encoding='utf-8')
 #     outfile.write(outline)
 #     # break
 save_dict = {}
-for a_file in tqdm(file_dir):
-    pid = a_file.split('.')[0]
-    path = f'{raw_path}/{a_file}'
+written_count = 0
+skipped_count = 0
+
+for file_path in tqdm(file_dir):
+    pid = file_path.stem
     text_ = ''
-    
-    with open(path, encoding='utf-8') as fin:
-        lines = fin.readlines()
-        for line in lines:
-            line = line.replace("\n", "")
-            text_ = text_ + line
+
+    try:
+        with open(file_path, encoding='utf-8') as fin:
+            lines = fin.readlines()
+            for line in lines:
+                line = line.replace("\n", "")
+                text_ = text_ + line
+    except UnicodeDecodeError as exc:
+        skipped_count += 1
+        print(f"⚠️ 跳過無法以 UTF-8 讀取的檔案: {file_path.name} ({exc})")
+        continue
 
     save_dict = {}
     save_dict['id'] = pid
     save_dict['contents'] = text_
     # print(save_dict)
-    outline = json.dumps(save_dict,ensure_ascii=False)+'\n'
+    outline = json.dumps(save_dict, ensure_ascii=False) + '\n'
     outfile.write(outline)
+    written_count += 1
 
     # save_dict[str(pid)] = text_
     # save_dict['contents'] = text_
@@ -76,3 +86,4 @@ for a_file in tqdm(file_dir):
 # with open(f"{TASK1_DIR}/corpus_all.json", "w", encoding="utf-8") as fp:
 #     json.dump(save_dict,fp,ensure_ascii=False)
 print(f"✅ JSON 檔案已成功寫入至 {outfile.name}")
+print(f"寫入文件數: {written_count}，跳過文件數: {skipped_count}")

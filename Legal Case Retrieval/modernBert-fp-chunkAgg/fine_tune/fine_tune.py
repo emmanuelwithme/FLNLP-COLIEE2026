@@ -2,10 +2,6 @@ import os
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 import torch
-if torch.cuda.is_available():
-    torch.backends.cuda.matmul.allow_tf32 = False
-    torch.backends.cudnn.allow_tf32 = False
-# torch.set_float32_matmul_precision('high')
 import json
 from torch import nn
 import contextlib
@@ -37,6 +33,10 @@ from pathlib import Path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'utils'))
 
+from env_utils import load_chunkagg_dotenv
+
+_LOADED_DOTENV_PATH = load_chunkagg_dotenv(__file__)
+
 PACKAGE_ROOT = Path(__file__).resolve().parents[2]
 if str(PACKAGE_ROOT) not in sys.path:
     sys.path.insert(0, str(PACKAGE_ROOT))
@@ -48,7 +48,7 @@ TASK1_YEAR = get_task1_year()
 
 from lcr.data import EmbeddingsData
 import torch.nn.functional as F
-from collections import defaultdict
+from collections import OrderedDict, defaultdict
 import time
 from lcr.data import load_query_ids as load_query_ids_from_utils
 from lcr.device import get_device
@@ -57,31 +57,70 @@ from lcr.metrics import (
     rel_file_to_dict as rel_file_convert,
     trec_file_to_dict as trec_file_convert,
 )
-from lcr.retrieval import generate_similarity_artifacts
+from lcr.retrieval import _build_document_batch, _chunk_single_text, generate_similarity_artifacts
 
 # Global holder for retrieval results to reuse in TB logging callback
 _LATEST_RETRIEVAL_RESULTS = None
 _EVAL_EPOCH_TAG = None  # 用於在評估時以 epoch 編號命名輸出檔
 
+
+def _get_env_bool(name: str, default: bool) -> bool:
+    raw_value = os.getenv(name)
+    if raw_value is None:
+        return default
+    return raw_value.strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
+def _get_env_int(name: str, default: int) -> int:
+    return int(os.getenv(name, str(default)))
+
+
+def _get_env_float(name: str, default: float) -> float:
+    return float(os.getenv(name, str(default)))
+
 # -------------
 # QUICK TEST MODE
 # -------------
-# 切換快速測試模式：True 只取極少量資料以便快速驗證流程
-QUICK_TEST = False # 如果要正式訓練，設成 False
-SCOPE_FILTER = True  # 依 query 年份限制候選庫，避免抽到未來判決書
-RETRIEVAL_BATCH_SIZE = max(1, int(os.getenv("TASK1_RETRIEVAL_BATCH_SIZE", "8")))
-INIT_TEMPERATURE = float(os.getenv("TASK1_INIT_TEMPERATURE", "0.55555"))
+# 中文註解：TASK1_CHUNKAGG_QUICK_TEST=1 時，只抽極少量資料驗證流程。
+QUICK_TEST = _get_env_bool("TASK1_CHUNKAGG_QUICK_TEST", False)
+# 中文註解：TASK1_CHUNKAGG_SCOPE_FILTER=1 時，retrieval 只在同年份範圍內 candidates 計分。
+SCOPE_FILTER = _get_env_bool("TASK1_CHUNKAGG_SCOPE_FILTER", True)
+# 中文註解：TASK1_RETRIEVAL_BATCH_SIZE 控制 retrieval / adaptive negative sampling 的文件編碼 batch size。
+RETRIEVAL_BATCH_SIZE = max(1, _get_env_int("TASK1_RETRIEVAL_BATCH_SIZE", 8))
+# 中文註解：TASK1_INIT_TEMPERATURE 是對比式學習初始溫度。
+INIT_TEMPERATURE = _get_env_float("TASK1_INIT_TEMPERATURE", 0.2222)
 if INIT_TEMPERATURE <= 0:
     raise ValueError(f"TASK1_INIT_TEMPERATURE must be > 0, got: {INIT_TEMPERATURE}")
+# 中文註解：TASK1_MAX_DOCUMENT_CHUNKS 控制每篇文件最多保留幾個 chunk。
+MAX_DOCUMENT_CHUNKS = max(1, _get_env_int("TASK1_MAX_DOCUMENT_CHUNKS", 3))
+# 中文註解：TASK1_DOCUMENT_CHUNK_LENGTH 控制每個 chunk 的最長 token 數，含 special tokens。
+DOCUMENT_CHUNK_LENGTH = max(8, _get_env_int("TASK1_DOCUMENT_CHUNK_LENGTH", 4096))
+# 中文註解：TASK1_CHUNK_MICROBATCH_SIZE 控制同一次 encoder forward 送幾個 chunk，避免 OOM。
+CHUNK_MICROBATCH_SIZE = max(1, _get_env_int("TASK1_CHUNK_MICROBATCH_SIZE", 1))
+# 中文註解：TASK1_CHUNKAGG_ENABLE_TF32=1 時，允許 Ampere/Ada GPU 用 TF32 加速 matmul。
+ENABLE_TF32 = _get_env_bool("TASK1_CHUNKAGG_ENABLE_TF32", True)
+# 中文註解：TASK1_CHUNKAGG_TEXT_CACHE_SIZE 控制資料集層的原始文本快取數量。
+TEXT_CACHE_SIZE = max(0, _get_env_int("TASK1_CHUNKAGG_TEXT_CACHE_SIZE", 4096))
+# 中文註解：TASK1_CHUNKAGG_CHUNK_CACHE_SIZE 控制 collator 層的 chunk tokenization 快取數量。
+CHUNK_CACHE_SIZE = max(0, _get_env_int("TASK1_CHUNKAGG_CHUNK_CACHE_SIZE", 1024))
+# 中文註解：TASK1_CHUNKAGG_PIN_MEMORY / TASK1_CHUNKAGG_PERSISTENT_WORKERS 控制 dataloader 傳輸效率。
+ENABLE_PIN_MEMORY = _get_env_bool("TASK1_CHUNKAGG_PIN_MEMORY", True)
+ENABLE_PERSISTENT_WORKERS = _get_env_bool("TASK1_CHUNKAGG_PERSISTENT_WORKERS", True)
+
+if torch.cuda.is_available():
+    torch.backends.cuda.matmul.allow_tf32 = ENABLE_TF32
+    torch.backends.cudnn.allow_tf32 = ENABLE_TF32
+if ENABLE_TF32:
+    torch.set_float32_matmul_precision('high')
 
 # 由 main() 設定，用於 generate_similarity_artifacts 的覆寫資料
 _QT_CANDIDATE_FILES = None   # List[str] 檔名（包含 .txt）
 _QT_TRAIN_QIDS = None        # List[str]
 _QT_VALID_QIDS = None        # List[str]
 
-# QUICK_TEST 數量上限（可由環境變數覆寫）
-QT_CAND_K = 20   # 候選檔案上限
-QT_QUERY_K = 5  # 訓練 query 數量上限，以及BM25選出的驗證資料(valid_dataset，用來計算eval_loss, eval_acc1, eval_acc5)數量上限
+# 中文註解：TASK1_CHUNKAGG_QT_CAND_K / TASK1_CHUNKAGG_QT_QUERY_K 控制 QUICK_TEST 模式的樣本量。
+QT_CAND_K = max(1, _get_env_int("TASK1_CHUNKAGG_QT_CAND_K", 20))
+QT_QUERY_K = max(1, _get_env_int("TASK1_CHUNKAGG_QT_QUERY_K", 5))
 
 
 def evaluate_model_retrieval(model, tokenizer, device, candidate_dataset_path, query_dataset_path, 
@@ -130,7 +169,7 @@ def evaluate_model_retrieval(model, tokenizer, device, candidate_dataset_path, q
             trec_output_path=Path(output_dir) / f"similarity_scores_{epoch_tag}.tsv",
             run_tag=f"modernBert_{epoch_tag}",
             batch_size=retrieval_batch_size,
-            max_length=4096,
+            max_length=DOCUMENT_CHUNK_LENGTH,
             quick_test=QUICK_TEST,
             candidate_files_override=_QT_CANDIDATE_FILES,
             candidate_limit=QT_CAND_K,
@@ -246,12 +285,9 @@ class TensorBoardExtras(TrainerCallback):
         self._ensure_writer(args)
 
     def on_log(self, args, state, control, logs=None, **kwargs):
-        # Trainer 每個 logging step 會呼叫這裡，logs 內含 loss、learning_rate 等
+        # 中文註解：標準 train/eval 指標交給 Hugging Face 內建 TensorBoard writer，
+        # 避免和 report_to=["tensorboard"] 重複寫入。
         self._ensure_writer(args)
-        if logs:
-            for k, v in logs.items():
-                if isinstance(v, (int, float)):
-                    self.writer.add_scalar(f"train/{k}", v, state.global_step)
 
     def on_step_end(self, args, state, control, **kwargs):
         # 這裡額外寫 temperature 與每組學習率
@@ -269,12 +305,8 @@ class TensorBoardExtras(TrainerCallback):
                 self.writer.add_scalar(f"train/lr_group_{i}", lr, state.global_step)
 
     def on_evaluate(self, args, state, control, metrics=None, **kwargs):
-        # 每次 evaluate() 後把 eval_* 寫到 TensorBoard
-        self._ensure_writer(args)
-        if metrics:
-            for k, v in metrics.items():
-                if isinstance(v, (int, float)):
-                    self.writer.add_scalar(f"eval/{k}", v, state.global_step)
+        # 中文註解：eval_* 指標由官方 writer 產生，不在 extras writer 重複記錄。
+        return
 
     def on_train_end(self, args, state, control, **kwargs):
         if self.writer:
@@ -410,6 +442,9 @@ class ContrastiveDataset(Dataset):
             self.data = []
         
         self.doc_folder = doc_folder
+        # 中文註解：把常重複讀取的判決書文字放進 LRU cache，減少磁碟 I/O。
+        self.text_cache_size = TEXT_CACHE_SIZE
+        self._text_cache = OrderedDict()
         if json_path:
             print(f"🔹 對比式資料（{os.path.basename(json_path)}）共載入 {len(self.data)} 筆樣本")
         else:
@@ -424,15 +459,29 @@ class ContrastiveDataset(Dataset):
         return len(self.data)
     
     def load_text(self, doc_id: str) -> str:
+        if self.text_cache_size > 0 and doc_id in self._text_cache:
+            text = self._text_cache.pop(doc_id)
+            self._text_cache[doc_id] = text
+            return text
+
         path = os.path.join(self.doc_folder, f"{doc_id}.txt")
         with open(path, 'r', encoding='utf-8') as f:
-            return f.read().strip()
+            text = f.read().strip()
+
+        if self.text_cache_size > 0:
+            self._text_cache[doc_id] = text
+            while len(self._text_cache) > self.text_cache_size:
+                self._text_cache.popitem(last=False)
+        return text
     
     def __getitem__(self, idx):
         sample = self.data[idx]
         return {
+            "query_id": sample["query_id"],
             "query_text": self.load_text(sample["query_id"]),
+            "positive_id": sample["positive_id"],
             "positive_text": self.load_text(sample["positive_id"]),
+            "negative_ids": sample["negative_ids"],
             "negative_texts": [self.load_text(nid) for nid in sample["negative_ids"]]
         }
 
@@ -440,32 +489,152 @@ class ContrastiveDataset(Dataset):
 @dataclass
 class ContrastiveCollator:
     tokenizer: AutoTokenizer
-    max_length: int = 4096
+    max_length: int = DOCUMENT_CHUNK_LENGTH
+    max_chunks: int = MAX_DOCUMENT_CHUNKS
+    chunk_cache_size: int = CHUNK_CACHE_SIZE
+
+    def __post_init__(self):
+        # 中文註解：把常見文件的 chunk tokenization 快取在 CPU，減少 tokenizer 開銷。
+        self._chunk_cache = OrderedDict()
+
+    def _get_cached_chunk(self, cache_key: str, text: str) -> Dict[str, torch.Tensor]:
+        if self.chunk_cache_size > 0 and cache_key in self._chunk_cache:
+            cached = self._chunk_cache.pop(cache_key)
+            self._chunk_cache[cache_key] = cached
+            return cached
+
+        encoded = _chunk_single_text(
+            text,
+            self.tokenizer,
+            max_length=self.max_length,
+            max_chunks=self.max_chunks,
+        )
+        if self.chunk_cache_size > 0:
+            self._chunk_cache[cache_key] = encoded
+            while len(self._chunk_cache) > self.chunk_cache_size:
+                self._chunk_cache.popitem(last=False)
+        return encoded
+
+    def _build_cached_document_batch(
+        self,
+        texts: List[str],
+        ids: Optional[List[str]] = None,
+    ) -> Dict[str, torch.Tensor]:
+        if not texts:
+            return _build_document_batch(
+                texts,
+                self.tokenizer,
+                max_length=self.max_length,
+                max_chunks=self.max_chunks,
+                device=None,
+            )
+
+        if ids is None or self.chunk_cache_size <= 0:
+            return _build_document_batch(
+                texts,
+                self.tokenizer,
+                max_length=self.max_length,
+                max_chunks=self.max_chunks,
+                device=None,
+            )
+
+        encoded_documents = [
+            self._get_cached_chunk(cache_key=str(doc_id), text=text)
+            for doc_id, text in zip(ids, texts)
+        ]
+        return {
+            key: torch.stack([encoded[key] for encoded in encoded_documents], dim=0)
+            for key in ("input_ids", "attention_mask", "chunk_mask")
+        }
+
     def __call__(self, batch: List[Dict]) -> Dict[str, torch.Tensor]:
         bsz = len(batch)
+        q_ids = [item["query_id"] for item in batch]
         q_texts = [item["query_text"] for item in batch]
+        p_ids = [item["positive_id"] for item in batch]
         p_texts = [item["positive_text"] for item in batch]
+        n_ids = [neg_id for item in batch for neg_id in item["negative_ids"]]
         n_texts = [neg for item in batch for neg in item["negative_texts"]]
-        all_texts = q_texts + p_texts + n_texts
-        all_enc = self.tokenizer(
-            all_texts, padding=True, truncation=True,
-            max_length=self.max_length, return_tensors="pt"
+
+        # 中文註解：query / positive / negative 全部共用同一套 3-chunk 文件編碼邏輯。
+        anchor_batch = self._build_cached_document_batch(
+            q_texts,
+            ids=q_ids,
         )
+        positive_batch = self._build_cached_document_batch(
+            p_texts,
+            ids=p_ids,
+        )
+        negative_batch = self._build_cached_document_batch(
+            n_texts,
+            ids=n_ids,
+        )
+
         neg_count = len(n_texts) // bsz
-        sizes = [bsz, bsz, bsz * neg_count]
-        anchor_ids,  positive_ids,  negative_ids  = all_enc["input_ids"].split(sizes, dim=0)
-        anchor_mask, positive_mask, negative_mask = all_enc["attention_mask"].split(sizes, dim=0)
         labels = torch.zeros(bsz, dtype=torch.long)
         return {
-            "anchor_input":   {"input_ids": anchor_ids,   "attention_mask": anchor_mask},
-            "positive_input": {"input_ids": positive_ids, "attention_mask": positive_mask},
-            "negative_input": {"input_ids": negative_ids, "attention_mask": negative_mask},
+            "anchor_input": anchor_batch,
+            "positive_input": positive_batch,
+            "negative_input": negative_batch,
             "labels": labels,
+            "negatives_per_query": neg_count,
         }
 
 # ----------- Model with InfoNCE loss -----------
+class ChunkFusionBlock(nn.Module):
+    """中文註解：用 1 層 pre-norm transformer block 融合 1~3 個 chunk 向量。"""
+
+    def __init__(self, hidden_dim: int, num_heads: int, dropout: float = 0.1):
+        super().__init__()
+        self.attn_norm = nn.LayerNorm(hidden_dim)
+        self.self_attn = nn.MultiheadAttention(
+            embed_dim=hidden_dim,
+            num_heads=num_heads,
+            dropout=dropout,
+            batch_first=True,
+        )
+        self.attn_dropout = nn.Dropout(dropout)
+        self.ffn_norm = nn.LayerNorm(hidden_dim)
+        self.ffn = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim * 4),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim * 4, hidden_dim),
+            nn.Dropout(dropout),
+        )
+
+    def forward(
+        self,
+        hidden_states: torch.Tensor,
+        padding_mask: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
+        residual = hidden_states
+        normed_states = self.attn_norm(hidden_states)
+        attn_output, _ = self.self_attn(
+            normed_states,
+            normed_states,
+            normed_states,
+            key_padding_mask=padding_mask,
+            need_weights=False,
+        )
+        hidden_states = residual + self.attn_dropout(attn_output)
+
+        residual = hidden_states
+        normed_states = self.ffn_norm(hidden_states)
+        hidden_states = residual + self.ffn(normed_states)
+        return hidden_states
+
+
 class ModernBERTContrastive(nn.Module):
-    def __init__(self, model_name: str, device, temperature: float = 0.55555):
+    def __init__(
+        self,
+        model_name: str,
+        device,
+        temperature: float = 0.55555,
+        max_chunks: int = MAX_DOCUMENT_CHUNKS,
+        chunk_microbatch_size: int = CHUNK_MICROBATCH_SIZE,
+        fusion_dropout: float = 0.1,
+    ):
         super().__init__()
         # 與 inference.py 保持一致的 encoder_kwargs 設定；fp16 由 Trainer 的 AMP 控制，權重維持 fp32
         device_str = str(device)
@@ -481,21 +650,37 @@ class ModernBERTContrastive(nn.Module):
         # 確保權重直接放到指定裝置並維持 fp32
         self.encoder.to(device=device, dtype=dtype)
         hidden_dim = self.encoder.config.hidden_size
+        self.hidden_dim = hidden_dim
+        self.max_chunks = max_chunks
+        self.chunk_microbatch_size = max(1, int(chunk_microbatch_size))
+        self.supports_chunked_documents = True
+
         self.projector = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
         )
+        # 中文註解：learnable [DOC] token 與 chunk 位置向量，用來做 chunk-level 聚合。
+        self.doc_token = nn.Parameter(torch.zeros(1, 1, hidden_dim))
+        self.chunk_pos_emb = nn.Parameter(torch.zeros(1, max_chunks + 1, hidden_dim))
+        num_heads = getattr(self.encoder.config, "num_attention_heads", 12)
+        self.chunk_fusion = ChunkFusionBlock(
+            hidden_dim=hidden_dim,
+            num_heads=num_heads,
+            dropout=fusion_dropout,
+        )
         # 可學習的 temperature（log-param 保證 >0）
         self.log_temperature = nn.Parameter(
             torch.tensor(np.log(float(temperature)), dtype=torch.float32)
         )
-        self.temperature_min = 1e-3
+        self.temperature_min = 1e-2
         self.temperature_max = 2.0
+        self.fusion_dropout = fusion_dropout
 
         self.encoder.config.use_cache = False
         self.encoder.enable_input_require_grads() # 打開訓練效果會好點，可以學習id->embedding
         self.encoder.gradient_checkpointing_enable()
+        self._init_chunk_agg_parameters()
 
     # 供 Trainer 呼叫，維持介面與 huggingface 模型一致
     def gradient_checkpointing_enable(self, **kwargs):
@@ -506,43 +691,147 @@ class ModernBERTContrastive(nn.Module):
         if hasattr(self.encoder, "gradient_checkpointing_disable"):
             self.encoder.gradient_checkpointing_disable()
 
+    def _init_chunk_agg_parameters(self):
+        # 中文註解：新增聚合層參數沿用 BERT 類型初始化尺度。
+        nn.init.normal_(self.doc_token, mean=0.0, std=0.02)
+        nn.init.normal_(self.chunk_pos_emb, mean=0.0, std=0.02)
+        for module in self.chunk_fusion.modules():
+            if isinstance(module, nn.Linear):
+                nn.init.normal_(module.weight, mean=0.0, std=0.02)
+                if module.bias is not None:
+                    nn.init.zeros_(module.bias)
+            elif isinstance(module, nn.LayerNorm):
+                nn.init.ones_(module.weight)
+                nn.init.zeros_(module.bias)
+
+    def added_parameter_count(self) -> int:
+        # 中文註解：只統計此次 chunk aggregation 額外新增的參數量。
+        return (
+            self.doc_token.numel()
+            + self.chunk_pos_emb.numel()
+            + sum(p.numel() for p in self.chunk_fusion.parameters())
+        )
+
+    def chunk_aggregation_parameters(self):
+        return (
+            list(self.projector.parameters())
+            + [self.doc_token, self.chunk_pos_emb]
+            + list(self.chunk_fusion.parameters())
+        )
+
+    def _encode_projected_chunks(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor,
+        chunk_mask: torch.Tensor,
+    ) -> torch.Tensor:
+        batch_size, chunk_count, seq_len = input_ids.shape
+        flat_input_ids = input_ids.view(batch_size * chunk_count, seq_len)
+        flat_attention_mask = attention_mask.view(batch_size * chunk_count, seq_len)
+        # 中文註解：以 attention_mask 再次校正有效 chunk，避免空文本產生 chunk_mask=1 但 token 數為 0。
+        flat_chunk_mask = chunk_mask.view(batch_size * chunk_count).bool() & flat_attention_mask.any(dim=1)
+        valid_indices = flat_chunk_mask.nonzero(as_tuple=False).flatten()
+
+        flat_embeddings = self.projector[0].weight.new_zeros(
+            batch_size * chunk_count,
+            self.hidden_dim,
+        )
+        if valid_indices.numel() == 0:
+            return flat_embeddings.view(batch_size, chunk_count, self.hidden_dim)
+
+        for start in range(0, valid_indices.numel(), self.chunk_microbatch_size):
+            batch_indices = valid_indices[start : start + self.chunk_microbatch_size]
+            encoder_outputs = self.encoder(
+                input_ids=flat_input_ids.index_select(0, batch_indices),
+                attention_mask=flat_attention_mask.index_select(0, batch_indices),
+            )
+            cls_vectors = encoder_outputs.last_hidden_state[:, 0, :]
+            projected_vectors = self.projector(cls_vectors).to(dtype=flat_embeddings.dtype)
+            flat_embeddings.index_copy_(0, batch_indices, projected_vectors)
+
+        return flat_embeddings.view(batch_size, chunk_count, self.hidden_dim)
+
+    def encode_document(self, input_batch: Dict[str, torch.Tensor]) -> torch.Tensor:
+        input_ids = input_batch["input_ids"]
+        attention_mask = input_batch["attention_mask"]
+        chunk_mask = input_batch.get("chunk_mask")
+
+        if input_ids.dim() == 2:
+            input_ids = input_ids.unsqueeze(1)
+            attention_mask = attention_mask.unsqueeze(1)
+            if chunk_mask is None:
+                chunk_mask = attention_mask.any(dim=-1).long()
+            else:
+                chunk_mask = chunk_mask.view(-1, 1)
+        elif input_ids.dim() == 3:
+            if chunk_mask is None:
+                chunk_mask = attention_mask.any(dim=-1).long()
+        else:
+            raise ValueError(f"Unsupported input_ids ndim: {input_ids.dim()}")
+
+        # 中文註解：chunk_mask 與 attention_mask 必須一致，否則 ModernBERT flash attention 可能在空 chunk 上失敗。
+        chunk_mask = (
+            chunk_mask.to(device=input_ids.device, dtype=torch.long)
+            * attention_mask.any(dim=-1).to(device=input_ids.device, dtype=torch.long)
+        )
+        chunk_vectors = self._encode_projected_chunks(input_ids, attention_mask, chunk_mask)
+
+        batch_size, chunk_count, _ = chunk_vectors.shape
+        doc_tokens = self.doc_token.expand(batch_size, -1, -1)
+        fusion_inputs = torch.cat([doc_tokens, chunk_vectors], dim=1)
+        fusion_inputs = fusion_inputs + self.chunk_pos_emb[:, : chunk_count + 1, :]
+
+        # 中文註解：padding_mask=True 表示該位置不參與 self-attention。
+        padding_mask = torch.cat(
+            [
+                torch.zeros(batch_size, 1, dtype=torch.bool, device=input_ids.device),
+                ~chunk_mask.bool(),
+            ],
+            dim=1,
+        )
+        fused_states = self.chunk_fusion(fusion_inputs, padding_mask=padding_mask)
+        document_vectors = fused_states[:, 0, :]
+        return torch.nn.functional.normalize(document_vectors, p=2, dim=-1)
+
     def encode(self, input_batch: Dict[str, torch.Tensor]) -> torch.Tensor:
-        output = self.encoder(**input_batch)
-        vec = output.last_hidden_state[:, 0, :]
-        vec_project = self.projector(vec)
-        vec_l2_norm = torch.nn.functional.normalize(vec_project, p=2, dim=-1)
-        return vec_l2_norm
-    
-    def encode_in_chunks(self, negatives_input, chunk_size):
-        ids = negatives_input["input_ids"]
-        attn = negatives_input["attention_mask"]
-        all_vecs = []
-        for start in range(0, ids.size(0), chunk_size):
-            end = start + chunk_size
-            out = self.encoder(input_ids=ids[start:end], attention_mask=attn[start:end])
-            cls = out.last_hidden_state[:,0,:]
-            proj = self.projector(cls)
-            all_vecs.append(torch.nn.functional.normalize(proj, p=2, dim=-1))
-        return torch.cat(all_vecs, dim=0)
+        return self.encode_document(input_batch)
 
     def forward(self,
         anchor_input: Dict[str, torch.Tensor],
         positive_input: Dict[str, torch.Tensor],
         negative_input: Dict[str, torch.Tensor],
         labels: Optional[torch.Tensor] = None,
+        negatives_per_query: Optional[int] = None,
     ) -> Dict[str, torch.Tensor]:
-        print(f"forward...")
         temperature = self.log_temperature.exp().clamp(self.temperature_min, self.temperature_max)
         bsz = anchor_input["input_ids"].size(0)
-        neg_count = negative_input["input_ids"].size(0) // bsz
+        neg_count = negatives_per_query or (negative_input["input_ids"].size(0) // bsz)
 
         merged_batch = {
-            "input_ids": torch.cat([
-                anchor_input["input_ids"], positive_input["input_ids"], negative_input["input_ids"]
-            ], dim=0),
-            "attention_mask": torch.cat([
-                anchor_input["attention_mask"], positive_input["attention_mask"], negative_input["attention_mask"]
-            ], dim=0),
+            "input_ids": torch.cat(
+                [
+                    anchor_input["input_ids"],
+                    positive_input["input_ids"],
+                    negative_input["input_ids"],
+                ],
+                dim=0,
+            ),
+            "attention_mask": torch.cat(
+                [
+                    anchor_input["attention_mask"],
+                    positive_input["attention_mask"],
+                    negative_input["attention_mask"],
+                ],
+                dim=0,
+            ),
+            "chunk_mask": torch.cat(
+                [
+                    anchor_input["chunk_mask"],
+                    positive_input["chunk_mask"],
+                    negative_input["chunk_mask"],
+                ],
+                dim=0,
+            ),
         }
         vec_all = self.encode(merged_batch)
         anchor_vec   = vec_all[:bsz]
@@ -550,14 +839,14 @@ class ModernBERTContrastive(nn.Module):
         neg_flat     = vec_all[bsz*2:]
         negative_vec = neg_flat.view(bsz, neg_count, -1)
 
-        self.print_gpu_status("all encoded in one pass")
-        pos_sim = torch.cosine_similarity(anchor_vec, positive_vec, dim=-1).unsqueeze(1)
-        neg_sim = torch.cosine_similarity(anchor_vec.unsqueeze(1), negative_vec, dim=-1)
-        self.print_gpu_status("cosine similarity computed")
+        # 中文註解：向量已 L2 normalize，內積即 cosine similarity。
+        pos_sim = torch.sum(anchor_vec * positive_vec, dim=-1, keepdim=True)
+        neg_sim = torch.sum(anchor_vec.unsqueeze(1) * negative_vec, dim=-1)
 
         logits = torch.cat([pos_sim, neg_sim], dim=1) / temperature
+        if labels is None:
+            labels = torch.zeros(bsz, dtype=torch.long, device=logits.device)
         loss = nn.CrossEntropyLoss()(logits, labels)
-        print(f"labels: {labels} │ temperature(now)={temperature.item()}")
         return {"loss": loss, "logits": logits}
     
     def print_gpu_status(self, tag=""):
@@ -609,6 +898,7 @@ class AdaptiveNegativeSamplingTrainer(Trainer):
         print(f"   - 負樣本更新頻率：每 {self.update_frequency} 個epoch")
         print(f"   - 採樣溫度：{self.sampling_temperature}")
         print(f"   - Candidate embedding batch size：{self.retrieval_batch_size}")
+        print(f"   - Chunk microbatch size：{getattr(self.model, 'chunk_microbatch_size', CHUNK_MICROBATCH_SIZE)}")
         if hasattr(self, 'train_qids'):
             print(f"   - 訓練查詢數量：{len(self.train_qids)}")
         if hasattr(self, 'positives'):
@@ -621,28 +911,42 @@ class AdaptiveNegativeSamplingTrainer(Trainer):
         args = self.args
         model = self.model
 
-        no_decay = ["bias", "LayerNorm.weight", "layer_norm.weight"]
-        decay_params, nodecay_params, temp_params = [], [], []
-
-        for n, p in model.named_parameters():
-            if not p.requires_grad:
-                continue
-            if "log_temperature" in n:
-                temp_params.append(p)
-            elif any(nd in n for nd in no_decay):
-                nodecay_params.append(p)
-            else:
-                decay_params.append(p)
+        encoder_params = [p for p in model.encoder.parameters() if p.requires_grad]
+        temp_params = [model.log_temperature] if model.log_temperature.requires_grad else []
+        encoder_param_ids = {id(p) for p in encoder_params}
+        temp_param_ids = {id(p) for p in temp_params}
+        head_params = [
+            p for p in model.parameters()
+            if p.requires_grad and id(p) not in encoder_param_ids and id(p) not in temp_param_ids
+        ]
+        encoder_lr = getattr(args, "encoder_lr", args.learning_rate)
+        fusion_lr = getattr(args, "fusion_lr", args.learning_rate)
+        temperature_lr = getattr(args, "temperature_lr", args.learning_rate)
 
         optimizer_grouped_parameters = [
-            {"params": decay_params,   "weight_decay": args.weight_decay, "lr": args.learning_rate},
-            {"params": nodecay_params, "weight_decay": 0.0,               "lr": args.learning_rate},
-            {"params": temp_params,    "weight_decay": 0.0,               "lr": getattr(args, "temperature_lr", args.learning_rate)},
+            {
+                "params": encoder_params,
+                "weight_decay": args.weight_decay,
+                "lr": encoder_lr,
+                "group_name": "encoder",
+            },
+            {
+                "params": head_params,
+                "weight_decay": args.weight_decay,
+                "lr": fusion_lr,
+                "group_name": "fusion_head",
+            },
+            {
+                "params": temp_params,
+                "weight_decay": 0.0,
+                "lr": temperature_lr,
+                "group_name": "log_temperature",
+            },
         ]
 
         # 根據 TrainingArguments 選擇 AdamW；若要求 fused，嘗試啟用
         adamw_kwargs = dict(
-            lr=args.learning_rate,
+            lr=encoder_lr,
             betas=(args.adam_beta1, args.adam_beta2),
             eps=args.adam_epsilon,
             weight_decay=args.weight_decay,
@@ -828,7 +1132,7 @@ class AdaptiveNegativeSamplingTrainer(Trainer):
                 trec_output_path=Path(self.finetune_data_dir) / f"similarity_scores_epoch{self.current_epoch}.tsv",
                 run_tag=f"modernBert_epoch{self.current_epoch}",
                 batch_size=self.retrieval_batch_size,
-                max_length=4096,
+                max_length=DOCUMENT_CHUNK_LENGTH,
                 quick_test=QUICK_TEST,
                 candidate_files_override=_QT_CANDIDATE_FILES,
                 candidate_limit=QT_CAND_K,
@@ -982,24 +1286,48 @@ def main():
     # 1. 檢查 CPU / GPU
     device = get_device()
 
-    ckpt_dir = (PACKAGE_ROOT.parent / "modernbert-caselaw-accsteps-fp" / "checkpoint-29000").resolve()
+    # 中文註解：TASK1_CHUNKAGG_BASE_ENCODER_DIR 指向 continued pretraining 後的 ModernBERT backbone checkpoint。
+    ckpt_dir = Path(
+        os.getenv(
+            "TASK1_CHUNKAGG_BASE_ENCODER_DIR",
+            str((PACKAGE_ROOT.parent / "modernbert-caselaw-accsteps-fp" / "checkpoint-29000").resolve()),
+        )
+    ).resolve()
     if not ckpt_dir.exists():
         raise FileNotFoundError(f"找不到繼續預訓練後的 ModernBERT checkpoint: {ckpt_dir}")
 
     model_name = str(ckpt_dir)
     print("🔹 載入 tokenizer 與模型...")
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+    # 中文註解：chunking 會自行控制長度，避免 tokenizer 對長文本發出截斷警告。
+    tokenizer.model_max_length = 1_000_000_000
 
     # 2. 初始化自定義的 Contrastive Model
-    model = ModernBERTContrastive(model_name, device, temperature=INIT_TEMPERATURE)
+    model = ModernBERTContrastive(
+        model_name,
+        device,
+        temperature=INIT_TEMPERATURE,
+        max_chunks=MAX_DOCUMENT_CHUNKS,
+        chunk_microbatch_size=CHUNK_MICROBATCH_SIZE,
+    ).to(device)
     print("✅ Tokenizer 與 Model 初始化完成")
     
     # Debug: 檢查模型組件
     print(f"🔍 Debug info:")
     print(f"   - Encoder: {type(model.encoder)}")
     print(f"   - Projector: {type(model.projector)}")
+    print(f"   - Chunk fusion: {type(model.chunk_fusion)}")
     print(f"   - Log temperature: {model.log_temperature}, temperature(actual): {model.log_temperature.exp().item():.8f}")
     print(f"   - Init temperature (from env): {INIT_TEMPERATURE}")
+    print(f"   - Max document chunks: {MAX_DOCUMENT_CHUNKS}")
+    print(f"   - Chunk length: {DOCUMENT_CHUNK_LENGTH}")
+    print(f"   - Chunk microbatch size: {CHUNK_MICROBATCH_SIZE}")
+    print(f"   - TF32 enabled: {ENABLE_TF32}")
+    print(f"   - Text cache size: {TEXT_CACHE_SIZE}")
+    print(f"   - Chunk cache size: {CHUNK_CACHE_SIZE}")
+    print(f"   - Dataloader pin_memory: {ENABLE_PIN_MEMORY}")
+    print(f"   - Dataloader persistent_workers: {ENABLE_PERSISTENT_WORKERS}")
+    print(f"   - 新增聚合參數量: {model.added_parameter_count():,}")
     try:
         sample_param = next(model.parameters())
         print(f"   - Model dtype/device: {sample_param.dtype} @ {sample_param.device}")
@@ -1015,16 +1343,22 @@ def main():
     valid_json_path = f"{TASK1_DIR}/lht_process/modernBert/finetune_data/contrastive_bm25_hard_negative_top100_random15_valid.json"
     valid_qid_path = f"{TASK1_DIR}/valid_qid.tsv"  # Define valid_qid_path
     labels_path = f"{TASK1_DIR}/task1_train_labels_{TASK1_YEAR}.json"  # Define labels_path
-    finetune_data_dir = f"{TASK1_DIR}/lht_process/modernBert/finetune_data"
+    # 中文註解：TASK1_CHUNKAGG_FINETUNE_DATA_DIR 用來存 adaptive negatives 與 retrieval artifacts。
+    finetune_data_dir_env = os.getenv("TASK1_CHUNKAGG_FINETUNE_DATA_DIR")
+    finetune_data_dir = finetune_data_dir_env or f"{TASK1_DIR}/lht_process/modernBert-chunkAgg/finetune_data"
     retrieval_batch_size = RETRIEVAL_BATCH_SIZE
 
-    base_output_dir = "./modernBERT_contrastive_adaptive_fp_fp16"
-    if SCOPE_FILTER:
-        base_output_dir += "_scopeFilteredRaw"
-    if QUICK_TEST:
-        base_output_dir += "_test"
+    # 中文註解：TASK1_CHUNKAGG_OUTPUT_DIR 為 Trainer checkpoint 輸出根目錄。
+    base_output_dir_env = os.getenv("TASK1_CHUNKAGG_OUTPUT_DIR")
+    base_output_dir = base_output_dir_env or "./modernBERT_contrastive_adaptive_fp_fp16_chunkAgg"
+    if base_output_dir_env is None:
+        if SCOPE_FILTER:
+            base_output_dir += "_scopeFilteredRaw"
+        if QUICK_TEST:
+            base_output_dir += "_test"
+        base_output_dir += f"_{TASK1_YEAR}"
+    if QUICK_TEST and finetune_data_dir_env is None:
         finetune_data_dir += "_test"
-    base_output_dir += f"_{TASK1_YEAR}"
     os.makedirs(finetune_data_dir, exist_ok=True)
 
     default_scope_path = f"{TASK1_DIR}/lht_process/modernBert/query_candidate_scope.json"
@@ -1077,25 +1411,40 @@ def main():
     # 5. 設定 TrainingArguments
     logging_dir = os.path.join(base_output_dir, "tb")
 
+    per_device_train_batch_size = max(1, _get_env_int("TASK1_CHUNKAGG_TRAIN_BATCH_SIZE", 1))
+    gradient_accumulation_steps = max(1, _get_env_int("TASK1_CHUNKAGG_GRAD_ACCUM_STEPS", 4))
+    per_device_eval_batch_size = max(1, _get_env_int("TASK1_CHUNKAGG_EVAL_BATCH_SIZE", 1))
+    num_train_epochs = _get_env_float("TASK1_CHUNKAGG_NUM_EPOCHS", 20)
+    encoder_lr = _get_env_float("TASK1_CHUNKAGG_ENCODER_LR", 5e-6)
+    fusion_lr = _get_env_float("TASK1_CHUNKAGG_FUSION_LR", 5e-5)
+    temperature_lr = _get_env_float("TASK1_CHUNKAGG_TEMPERATURE_LR", 5e-4)
+    warmup_ratio = _get_env_float("TASK1_CHUNKAGG_WARMUP_RATIO", 0.1)
+    train_num_workers = max(0, _get_env_int("TASK1_CHUNKAGG_NUM_WORKERS", 8))
+    save_total_limit = max(1, _get_env_int("TASK1_CHUNKAGG_SAVE_TOTAL_LIMIT", 20))
+    sampling_temperature = _get_env_float("TASK1_CHUNKAGG_SAMPLING_TEMPERATURE", 1.0)
+    update_frequency = max(1, _get_env_int("TASK1_CHUNKAGG_UPDATE_FREQUENCY", 1))
+
     args = TrainingArguments(
         output_dir=base_output_dir,
-        dataloader_num_workers=8,
-        per_device_train_batch_size=1,
-        gradient_accumulation_steps=4,
-        per_device_eval_batch_size=1,
+        dataloader_num_workers=train_num_workers,
+        dataloader_pin_memory=ENABLE_PIN_MEMORY,
+        dataloader_persistent_workers=ENABLE_PERSISTENT_WORKERS if train_num_workers > 0 else False,
+        per_device_train_batch_size=per_device_train_batch_size,
+        gradient_accumulation_steps=gradient_accumulation_steps,
+        per_device_eval_batch_size=per_device_eval_batch_size,
         fp16=True,
         bf16=False,
-        tf32=False,
-        learning_rate=5e-6,           # 給 encoder / projector
-        num_train_epochs=20,
-        warmup_ratio=0.1,
-        lr_scheduler_type="linear",
+        tf32=ENABLE_TF32,
+        learning_rate=encoder_lr,           # 給 encoder
+        num_train_epochs=num_train_epochs,
+        warmup_ratio=warmup_ratio,
+        lr_scheduler_type="cosine",
         optim="adamw_torch_fused",  # 使用穩定的 AdamW 以配合 bf16 + TF32
         logging_strategy="steps",
         logging_steps=50,
         eval_strategy="epoch",
         save_strategy="epoch",
-        save_total_limit=20,
+        save_total_limit=save_total_limit,
         load_best_model_at_end=True,
         # Use full-corpus valid retrieval F1 as selection metric
         metric_for_best_model="eval_global_f1",
@@ -1106,10 +1455,20 @@ def main():
         prediction_loss_only=False,
         logging_dir=logging_dir,
     )
-    # ✅ 給 temperature 的專屬 LR（自行調整）
-    args.temperature_lr = 5e-4
+    args.encoder_lr = encoder_lr
+    args.fusion_lr = fusion_lr
+    args.temperature_lr = temperature_lr
     print(f"   - Trainer bf16/fp16/tf32: bf16={args.bf16}, fp16={args.fp16}, tf32={args.tf32}")
     print(f"   - Retrieval batch size: {retrieval_batch_size}")
+    print(f"   - Encoder LR: {args.encoder_lr}")
+    print(f"   - Aggregator LR: {args.fusion_lr}")
+    print(f"   - Temperature LR: {args.temperature_lr}")
+    print(f"   - Train batch size: {per_device_train_batch_size}")
+    print(f"   - Gradient accumulation steps: {gradient_accumulation_steps}")
+    print(f"   - Eval batch size: {per_device_eval_batch_size}")
+    print(f"   - Num train epochs: {num_train_epochs}")
+    print(f"   - Sampling temperature: {sampling_temperature}")
+    print(f"   - Negative update frequency: {update_frequency}")
 
     # 6. 建立 Trainer（使用 AdaptiveNegativeSamplingTrainer）
     trainer = AdaptiveNegativeSamplingTrainer(
@@ -1117,7 +1476,12 @@ def main():
         args=args,
         train_dataset=train_dataset,
         eval_dataset=valid_dataset,
-        data_collator=ContrastiveCollator(tokenizer),
+        data_collator=ContrastiveCollator(
+            tokenizer,
+            max_length=DOCUMENT_CHUNK_LENGTH,
+            max_chunks=MAX_DOCUMENT_CHUNKS,
+            chunk_cache_size=CHUNK_CACHE_SIZE,
+        ),
         tokenizer=tokenizer,  # 保留 tokenizer 以供自訂 Trainer 使用
         compute_metrics=make_compute_metrics_for_retrieval(
             model=model,
@@ -1150,8 +1514,8 @@ def main():
         train_qid_path=train_qid_path,
         positive_train_json_path=positive_train_json_path,
         finetune_data_dir=finetune_data_dir,
-        sampling_temperature=1.0,  # 可以調整這個參數來控制負樣本選擇的隨機性
-        update_frequency=1,  # (整數)可以調整：1=每個epoch更新，2=每2個epoch更新一次，等等
+        sampling_temperature=sampling_temperature,  # 可以調整這個參數來控制負樣本選擇的隨機性
+        update_frequency=update_frequency,  # (整數)可以調整：1=每個epoch更新，2=每2個epoch更新一次，等等
         retrieval_batch_size=retrieval_batch_size,
     )
 
@@ -1170,7 +1534,8 @@ def main():
     # （可選）檢查各參數組 LR
     for i, g in enumerate(trainer.create_optimizer().param_groups):
         sz = sum(p.numel() for p in g["params"])
-        print(f"group {i}: lr={g['lr']}  weight_decay={g['weight_decay']}  #params={sz}")
+        group_name = g.get("group_name", f"group_{i}")
+        print(f"{group_name}: lr={g['lr']}  weight_decay={g['weight_decay']}  #params={sz}")
 
     # 7. 可中斷後續訓：優先使用指定checkpoint，否則自動找 output_dir 最新checkpoint
     explicit_resume_ckpt = os.getenv("TASK1_RESUME_FROM_CHECKPOINT", "").strip()

@@ -11,7 +11,7 @@ PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 if str(PACKAGE_ROOT) not in sys.path:
     sys.path.insert(0, str(PACKAGE_ROOT))
 
-from lcr.task1_paths import get_task1_dir
+from lcr.task1_paths import get_task1_dir, get_task1_year
 
 
 DEFAULT_YEAR_PATTERN = r"\b(18\d{2}|19\d{2}|200\d|201\d|202[0-6])\b"
@@ -71,12 +71,23 @@ def collect_case_paths(
     return found, missing
 
 
-def build_year_index(case_paths: Dict[str, Path], year_pattern: re.Pattern[str]) -> Dict[str, int]:
+def build_year_index_from_source(
+    case_ids: Iterable[str],
+    *,
+    source_dir: Path,
+    year_pattern: re.Pattern[str],
+) -> tuple[Dict[str, int], List[str]]:
     year_index: Dict[str, int] = {}
-    for case_id, path in case_paths.items():
-        text = path.read_text(encoding="utf-8", errors="ignore")
+    missing: List[str] = []
+    for case_id in case_ids:
+        source_path = resolve_case_path(case_id, source_dir)
+        if source_path is None:
+            year_index[case_id] = 0
+            missing.append(case_id)
+            continue
+        text = source_path.read_text(encoding="utf-8", errors="ignore")
         year_index[case_id] = extract_max_year(text, year_pattern)
-    return year_index
+    return year_index, missing
 
 
 def build_scope(
@@ -84,6 +95,7 @@ def build_scope(
     ordered_candidate_ids: List[str],
     candidate_years: Dict[str, int],
     *,
+    year_slack: int,
     unknown_query_year_policy: str,
     exclude_self: bool,
 ) -> Dict[str, List[str]]:
@@ -94,10 +106,11 @@ def build_scope(
         if qyear == 0:
             allowed = list(ordered_candidate_ids) if unknown_query_year_policy == "all" else []
         else:
+            year_threshold = qyear + max(0, year_slack)
             allowed = [
                 candidate_id
                 for candidate_id, candidate_year in zip(ordered_candidate_ids, candidate_year_values)
-                if candidate_year <= qyear
+                if candidate_year <= year_threshold
             ]
         if exclude_self:
             allowed = [candidate_id for candidate_id in allowed if candidate_id != qid]
@@ -109,7 +122,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Build a query->candidate scope index by filtering candidates with "
-            "year(candidate) <= year(query)."
+            "year(candidate) <= year(query) + year_slack."
         )
     )
     parser.add_argument(
@@ -143,10 +156,34 @@ def parse_args() -> argparse.Namespace:
         help="Optional file with one candidate id per line. If omitted, use all files in candidate-dir.",
     )
     parser.add_argument(
+        "--candidate-year-source-dir",
+        type=Path,
+        default=None,
+        help=(
+            "Directory used to extract candidate years. "
+            "Default: candidate-dir."
+        ),
+    )
+    parser.add_argument(
+        "--query-year-source-dir",
+        type=Path,
+        default=None,
+        help=(
+            "Directory used to extract query years. "
+            "Default: query-dir."
+        ),
+    )
+    parser.add_argument(
         "--year-pattern",
         type=str,
         default=DEFAULT_YEAR_PATTERN,
         help=f"Regex used to extract years. Default: {DEFAULT_YEAR_PATTERN}",
+    )
+    parser.add_argument(
+        "--year-slack",
+        type=int,
+        default=1,
+        help="Allow candidates up to `year_slack` years newer than the query year. Default: 1",
     )
     parser.add_argument(
         "--unknown-query-year-policy",
@@ -171,11 +208,17 @@ def parse_args() -> argparse.Namespace:
 def _execute(args: argparse.Namespace) -> None:
     candidate_dir: Path = args.candidate_dir
     query_dir: Path = args.query_dir
+    candidate_year_source_dir: Path = args.candidate_year_source_dir or candidate_dir
+    query_year_source_dir: Path = args.query_year_source_dir or query_dir
 
     if not candidate_dir.is_dir():
         raise FileNotFoundError(f"Candidate directory not found: {candidate_dir}")
     if not query_dir.is_dir():
         raise FileNotFoundError(f"Query directory not found: {query_dir}")
+    if not candidate_year_source_dir.is_dir():
+        raise FileNotFoundError(f"Candidate year source directory not found: {candidate_year_source_dir}")
+    if not query_year_source_dir.is_dir():
+        raise FileNotFoundError(f"Query year source directory not found: {query_year_source_dir}")
 
     year_pattern = re.compile(args.year_pattern)
 
@@ -198,29 +241,52 @@ def _execute(args: argparse.Namespace) -> None:
 
     print(f"Candidates found: {len(candidate_paths)}")
     print(f"Queries found: {len(query_paths)}")
+    print(f"Candidate year source: {candidate_year_source_dir}")
+    print(f"Query year source: {query_year_source_dir}")
+    print(f"Year slack: {args.year_slack}")
     if missing_candidate_ids:
         print(f"Missing candidate IDs from list: {len(missing_candidate_ids)} (example: {missing_candidate_ids[:5]})")
     if missing_query_ids:
         print(f"Missing query IDs from list: {len(missing_query_ids)} (example: {missing_query_ids[:5]})")
 
-    print("Extracting candidate years...")
-    candidate_years = build_year_index(candidate_paths, year_pattern)
-    print("Extracting query years...")
-    query_years = build_year_index(query_paths, year_pattern)
-
     ordered_candidate_ids = sorted(candidate_paths.keys())
+    print("Extracting candidate years...")
+    candidate_years, missing_candidate_year_sources = build_year_index_from_source(
+        ordered_candidate_ids,
+        source_dir=candidate_year_source_dir,
+        year_pattern=year_pattern,
+    )
+
     # Keep query order from provided IDs when available; otherwise sort by id.
     if selected_query_ids is not None:
-        ordered_query_ids = [qid for qid in selected_query_ids if qid in query_years]
+        ordered_query_ids = [qid for qid in selected_query_ids if qid in query_paths]
     else:
-        ordered_query_ids = sorted(query_years.keys())
+        ordered_query_ids = sorted(query_paths.keys())
+
+    print("Extracting query years...")
+    query_years, missing_query_year_sources = build_year_index_from_source(
+        ordered_query_ids,
+        source_dir=query_year_source_dir,
+        year_pattern=year_pattern,
+    )
     ordered_query_years = {qid: query_years[qid] for qid in ordered_query_ids}
+    if missing_candidate_year_sources:
+        print(
+            "Missing candidate IDs in year source: "
+            f"{len(missing_candidate_year_sources)} (example: {missing_candidate_year_sources[:5]})"
+        )
+    if missing_query_year_sources:
+        print(
+            "Missing query IDs in year source: "
+            f"{len(missing_query_year_sources)} (example: {missing_query_year_sources[:5]})"
+        )
 
     print("Building query->candidate scope index...")
     scope = build_scope(
         ordered_query_years,
         ordered_candidate_ids,
         candidate_years,
+        year_slack=args.year_slack,
         unknown_query_year_policy=args.unknown_query_year_policy,
         exclude_self=args.exclude_self,
     )
@@ -250,9 +316,11 @@ def _build_default_args_from_repo_root() -> argparse.Namespace:
       python "Legal Case Retrieval/pre-process/build_query_candidate_scope.py"
     """
     task1_root = Path(get_task1_dir())
+    task1_year = get_task1_year()
 
     candidate_dir = task1_root / "processed"
     query_dir = task1_root / "processed"
+    year_source_dir = task1_root / f"task1_train_files_{task1_year}"
     output_path = task1_root / "lht_process" / "modernBert" / "query_candidate_scope.json"
     train_qids_path = task1_root / "train_qid.tsv"
     valid_qids_path = task1_root / "valid_qid.tsv"
@@ -261,6 +329,8 @@ def _build_default_args_from_repo_root() -> argparse.Namespace:
         raise FileNotFoundError(f"Default train qid file not found: {train_qids_path}")
     if not valid_qids_path.exists():
         raise FileNotFoundError(f"Default valid qid file not found: {valid_qids_path}")
+    if not year_source_dir.exists():
+        raise FileNotFoundError(f"Default year source directory not found: {year_source_dir}")
 
     # Combine train+valid query IDs while preserving order and removing duplicates.
     merged_qids: List[str] = []
@@ -281,7 +351,10 @@ def _build_default_args_from_repo_root() -> argparse.Namespace:
         output_path=output_path,
         query_ids_path=query_ids_path,
         candidate_ids_path=None,
+        candidate_year_source_dir=year_source_dir,
+        query_year_source_dir=year_source_dir,
         year_pattern=DEFAULT_YEAR_PATTERN,
+        year_slack=1,
         unknown_query_year_policy="all",
         exclude_self=False,
         indent=2,

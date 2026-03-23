@@ -99,4 +99,4 @@ require_file "${TASK1_DIR}/lht_process/modernBert/query_candidate_scope.json"
 
 echo
 echo "[DONE] Fine-tune 前置流程完成。"
-echo "[NEXT] python \"Legal Case Retrieval/modernBert/fine_tune/fine_tune.py\""
+echo "[NEXT] python \"Legal Case Retrieval/modernBert-fp/fine_tune/fine_tune.py\""

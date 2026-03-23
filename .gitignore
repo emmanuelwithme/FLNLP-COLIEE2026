@@ -22,3 +22,5 @@ stage3-4096-encoder-laststep-777/
 Legal Case Entailment by Mou/data/task2_2026_prepared
 # test data預測提交結果
 task1_FLNLPLTR.txt
+# 段落向量融合端到端訓練的環境變數
+!Legal Case Retrieval/modernBert-fp-chunkAgg/.env
