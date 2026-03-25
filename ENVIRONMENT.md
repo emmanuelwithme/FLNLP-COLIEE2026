@@ -1,50 +1,58 @@
-# Environment Setup
+# 環境設定
 
-This repository uses the conda environment `FLNLP-COLIEE2026-WSL`.
+[English](ENVIRONMENT.en.md) | [回到入口頁](README.md)
 
-## Files
+本專案目前維護中的流程使用 conda 環境 `FLNLP-COLIEE2026-WSL`。
 
-- `environment.frozen.yml`: full frozen conda + pip environment export
+## 這份環境文件涵蓋什麼
 
-## Scope
-
-This environment record covers the maintained workflows only:
+這份環境記錄只保證以下流程：
 
 - `Legal Case Retrieval/`
 - `Legal Case Entailment by Mou/`
-- repo-root 2026 shell scripts
+- 根目錄維護中的 shell wrappers
 
-Excluded:
+不包含：
 
-- `Legal Case Entailment/` (legacy code)
+- `Legal Case Entailment/` legacy 程式碼
 
-## Recreate The Environment
+## 版本記錄檔
+
+- `environment.frozen.yml`
+  完整的 conda + pip 凍結匯出
+
+## 建立環境
 
 ```bash
 conda env create -f environment.frozen.yml
 conda activate FLNLP-COLIEE2026-WSL
 ```
 
-If the environment already exists:
+若環境已存在，要同步到記錄版本：
 
 ```bash
 conda env update -n FLNLP-COLIEE2026-WSL -f environment.frozen.yml --prune
 conda activate FLNLP-COLIEE2026-WSL
 ```
 
-## Notes
+## `.env` 與 conda 環境的關係
 
-- `environment.frozen.yml` records the required Python / package dependencies for the maintained workflows.
-- Some system-level requirements are still separate, especially Java for Pyserini/BM25 and compatible NVIDIA drivers for GPU execution.
+- `environment.frozen.yml` 記錄的是 Python 與套件環境
+- repo root 的 `.env` 則記錄資料路徑、年份與部分 workflow 參數
+- 兩者用途不同，通常都需要
 
-## Not Recorded In `environment.frozen.yml`
+## 系統層需求
 
-The following machine-level programs are not fully installed or reproduced by `conda env create -f environment.frozen.yml`:
+以下需求不會由 `conda env create -f environment.frozen.yml` 自動完整安裝：
 
 - `conda` `25.3.0`
 - `bash` `5.2.21(1)-release`
 - OpenJDK runtime `21.0.10`
 - NVIDIA driver `591.86`
-- GPU used during development: `NVIDIA GeForce RTX 4080 SUPER`
+- 開發時使用的 GPU: `NVIDIA GeForce RTX 4080 SUPER`
 
-These are system-level requirements outside the frozen Python package environment.
+## 補充說明
+
+- Pyserini / BM25 相關流程需要 Java
+- GPU 訓練與推論需要相容的 NVIDIA driver 與 CUDA 執行環境
+- 若只跑 CPU 路徑，部分流程仍可執行，但會明顯較慢
