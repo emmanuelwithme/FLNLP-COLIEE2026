@@ -2,6 +2,29 @@
 
 This repository is the FLNLP working codebase for COLIEE 2026 Task 1 and Task 2.
 
+## Environment
+
+The development environment used in this repo is the conda environment `FLNLP-COLIEE2026-WSL`.
+
+Environment records are now stored at repo root:
+
+- `environment.frozen.yml`: full frozen conda + pip environment export
+- `ENVIRONMENT.md`: detailed environment notes and scope
+
+Recommended setup after cloning:
+
+```bash
+conda env create -f environment.frozen.yml
+conda activate FLNLP-COLIEE2026-WSL
+```
+
+If the environment already exists and you want to sync it to the recorded versions:
+
+```bash
+conda env update -n FLNLP-COLIEE2026-WSL -f environment.frozen.yml --prune
+conda activate FLNLP-COLIEE2026-WSL
+```
+
 ## Task 1: Legal Case Retrieval
 
 Task 1 focuses on retrieving supporting cases for a new case from the legal case corpus.
@@ -62,24 +85,21 @@ Task 1 若要從原始資料一路跑到 submission，建議依下列順序進�
 
 Task 2 identifies the paragraph in a relevant case that entails the decision of a new case.
 
-Status note:
+Only the workflow under `Legal Case Entailment by Mou/` is maintained and supported in this repository.
 
-- `Legal Case Entailment/` is a legacy upstream folder.
-- It has not been fully migrated or repaired for the current repo, so code under that folder should be treated as not runnable as-is.
-- The current maintained Task 2 workflow is under `Legal Case Entailment by Mou/` and the repo-root `run_task2_finetune.sh`.
+`Legal Case Entailment/` is someone else's old code. I did not modify it, and it should be treated as not runnable.
 
-Main 2026 entrypoints:
+Main Task 2 entrypoint:
 
-- `run_task2_finetune.sh`
-  - Loads repo-root `.env`
-  - Activates the configured conda environment
-  - Prepares paragraph-level Task 2 data
-  - Optionally generates dataset statistics
-  - Runs ModernBERT fine-tuning
+- `bash run_task2_finetune.sh`
+  - loads repo-root `.env`
+  - activates the configured conda environment
+  - prepares paragraph-level Task 2 data
+  - optionally generates dataset statistics
+  - runs ModernBERT fine-tuning
 
 Detailed Task 2 documentation:
 
-- `Legal Case Entailment/README.md`
 - `Legal Case Entailment by Mou/README.md`
 
 ### 建議執行順序
@@ -93,7 +113,7 @@ Task 2 若要從原始資料開始，請使用 `Legal Case Entailment by Mou/` �
    `python "Legal Case Entailment by Mou/prepare_task2_paragraph_data.py"`
    `python "Legal Case Entailment by Mou/analyze_task2_stats.py"`（可選）
    `python "Legal Case Entailment by Mou/fine_tune_task2.py"`
-4. `Legal Case Entailment/` 目前不要當成可直接執行的主流程使用。
+4. 不要執行 `Legal Case Entailment/` 底下的程式；那是舊程式碼，未維護，也不是目前流程的一部分。
 
 ## Dataset
 
