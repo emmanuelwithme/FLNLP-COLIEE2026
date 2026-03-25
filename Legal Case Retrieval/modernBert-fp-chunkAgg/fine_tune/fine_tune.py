@@ -41,7 +41,7 @@ PACKAGE_ROOT = Path(__file__).resolve().parents[2]
 if str(PACKAGE_ROOT) not in sys.path:
     sys.path.insert(0, str(PACKAGE_ROOT))
 
-from lcr.task1_paths import get_task1_dir, get_task1_year
+from lcr.task1_paths import get_env_path, get_task1_dir, get_task1_year
 
 TASK1_DIR = get_task1_dir()
 TASK1_YEAR = get_task1_year()
@@ -1287,12 +1287,8 @@ def main():
     device = get_device()
 
     # 中文註解：TASK1_CHUNKAGG_BASE_ENCODER_DIR 指向 continued pretraining 後的 ModernBERT backbone checkpoint。
-    ckpt_dir = Path(
-        os.getenv(
-            "TASK1_CHUNKAGG_BASE_ENCODER_DIR",
-            str((PACKAGE_ROOT.parent / "modernbert-caselaw-accsteps-fp" / "checkpoint-29000").resolve()),
-        )
-    ).resolve()
+    ckpt_dir = get_env_path("TASK1_CHUNKAGG_BASE_ENCODER_DIR", required=True)
+    assert ckpt_dir is not None
     if not ckpt_dir.exists():
         raise FileNotFoundError(f"找不到繼續預訓練後的 ModernBERT checkpoint: {ckpt_dir}")
 
@@ -1344,21 +1340,15 @@ def main():
     valid_qid_path = f"{TASK1_DIR}/valid_qid.tsv"  # Define valid_qid_path
     labels_path = f"{TASK1_DIR}/task1_train_labels_{TASK1_YEAR}.json"  # Define labels_path
     # 中文註解：TASK1_CHUNKAGG_FINETUNE_DATA_DIR 用來存 adaptive negatives 與 retrieval artifacts。
-    finetune_data_dir_env = os.getenv("TASK1_CHUNKAGG_FINETUNE_DATA_DIR")
-    finetune_data_dir = finetune_data_dir_env or f"{TASK1_DIR}/lht_process/modernBert-chunkAgg/finetune_data"
+    finetune_data_dir = get_env_path("TASK1_CHUNKAGG_FINETUNE_DATA_DIR", required=True)
+    assert finetune_data_dir is not None
+    finetune_data_dir = str(finetune_data_dir)
     retrieval_batch_size = RETRIEVAL_BATCH_SIZE
 
     # 中文註解：TASK1_CHUNKAGG_OUTPUT_DIR 為 Trainer checkpoint 輸出根目錄。
-    base_output_dir_env = os.getenv("TASK1_CHUNKAGG_OUTPUT_DIR")
-    base_output_dir = base_output_dir_env or "./modernBERT_contrastive_adaptive_fp_fp16_chunkAgg"
-    if base_output_dir_env is None:
-        if SCOPE_FILTER:
-            base_output_dir += "_scopeFilteredRaw"
-        if QUICK_TEST:
-            base_output_dir += "_test"
-        base_output_dir += f"_{TASK1_YEAR}"
-    if QUICK_TEST and finetune_data_dir_env is None:
-        finetune_data_dir += "_test"
+    base_output_dir = get_env_path("TASK1_CHUNKAGG_OUTPUT_DIR", required=True)
+    assert base_output_dir is not None
+    base_output_dir = str(base_output_dir)
     os.makedirs(finetune_data_dir, exist_ok=True)
 
     default_scope_path = f"{TASK1_DIR}/lht_process/modernBert/query_candidate_scope.json"

@@ -18,6 +18,7 @@ if str(PACKAGE_ROOT) not in sys.path:
     sys.path.insert(0, str(PACKAGE_ROOT))
 
 from lcr.device import get_device
+from repo_config import get_env_path
 
 class ContrastiveConfig(ModernBertConfig):
     """
@@ -216,15 +217,17 @@ class ModernBERTContrastive(PreTrainedModel):
 if __name__ == "__main__":
     device = get_device()
 
-    # 假设已有一个以 HF 格式保存好的训练输出目录：
-    checkpoint_dir = "./modernBERT_contrastive/checkpoint-4068"
+    checkpoint_dir = get_env_path("TASK1_LEGACY_EXAMPLE_CHECKPOINT_DIR", required=True)
+    assert checkpoint_dir is not None
 
     # 1) 载入 tokenizer（该目录下已经包含 tokenizer.json、tokenizer_config.json）
-    tokenizer = AutoTokenizer.from_pretrained(checkpoint_dir)
+    tokenizer = AutoTokenizer.from_pretrained(str(checkpoint_dir))
 
     # 2) 一行载入：包含 encoder + projector head
-    # model = ModernBERTContrastive.from_pretrained(checkpoint_dir, device_map=device, torch_dtype=torch.float16, attn_implementation="flash_attention_2")
-    model = ModernBERTContrastive.from_pretrained(checkpoint_dir, encoder_kwargs={"device_map": device, "torch_dtype": torch.float16, "attn_implementation": "flash_attention_2"})
+    model = ModernBERTContrastive.from_pretrained(
+        str(checkpoint_dir),
+        encoder_kwargs={"device_map": device, "torch_dtype": torch.float16, "attn_implementation": "flash_attention_2"},
+    )
     model = model.to(device)
     model = model.half() #把projector的精度也轉成torch.float16(ModernBert backbone在from_pretrained()就指定載入是float16)
     model = model.eval()

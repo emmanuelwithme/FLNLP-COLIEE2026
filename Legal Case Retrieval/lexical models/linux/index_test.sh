@@ -4,34 +4,19 @@ set -euo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../../.." && pwd)"
 
-_CALLER_COLIEE_TASK1_YEAR="${COLIEE_TASK1_YEAR:-}"
-_CALLER_COLIEE_TASK1_ROOT="${COLIEE_TASK1_ROOT:-}"
-_CALLER_COLIEE_TASK1_DIR="${COLIEE_TASK1_DIR:-}"
+# shellcheck source=scripts/common_env.sh
+source "${REPO_ROOT}/scripts/common_env.sh"
+load_env_file_if_present "${REPO_ROOT}/.env"
 
-if [ -f "${REPO_ROOT}/.env" ]; then
-  set -a
-  . "${REPO_ROOT}/.env"
-  set +a
-fi
+require_envs TASK1_BM25_TEST_DIR TASK1_BM25_TEST_INDEX_THREADS
+resolve_env_path_var "${REPO_ROOT}" TASK1_BM25_TEST_DIR
 
-if [ -n "${_CALLER_COLIEE_TASK1_YEAR}" ]; then
-  COLIEE_TASK1_YEAR="${_CALLER_COLIEE_TASK1_YEAR}"
-fi
-if [ -n "${_CALLER_COLIEE_TASK1_ROOT}" ]; then
-  COLIEE_TASK1_ROOT="${_CALLER_COLIEE_TASK1_ROOT}"
-fi
-if [ -n "${_CALLER_COLIEE_TASK1_DIR}" ]; then
-  COLIEE_TASK1_DIR="${_CALLER_COLIEE_TASK1_DIR}"
-fi
-
-COLIEE_TASK1_YEAR="${COLIEE_TASK1_YEAR:-2025}"
-COLIEE_TASK1_ROOT="${COLIEE_TASK1_ROOT:-./coliee_dataset/task1}"
-TASK1_DIR="${COLIEE_TASK1_DIR:-${COLIEE_TASK1_ROOT}/${COLIEE_TASK1_YEAR}}"
+export JAVA_TOOL_OPTIONS="${COLIEE_JAVA_TOOL_OPTIONS:-${JAVA_TOOL_OPTIONS:-}}"
 
 python -m pyserini.index.lucene \
   --collection JsonCollection \
-  --input "${TASK1_DIR}/lht_process/BM25_test/corpus" \
-  --index "${TASK1_DIR}/lht_process/BM25_test/index" \
+  --input "${TASK1_BM25_TEST_DIR}/corpus" \
+  --index "${TASK1_BM25_TEST_DIR}/index" \
   --generator DefaultLuceneDocumentGenerator \
-  --threads 16 \
+  --threads "${TASK1_BM25_TEST_INDEX_THREADS}" \
   --storePositions --storeDocvectors --storeRaw

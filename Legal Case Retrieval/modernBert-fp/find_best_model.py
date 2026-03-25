@@ -12,7 +12,7 @@ def find_best_checkpoint(checkpoint_root: str, metric: str, mode: str) -> str:
     最後選出指定 metric 表現最好的那個 checkpoint 資料夾。
 
     參數：
-    - checkpoint_root: str, 存放所有 checkpoint 子資料夾 (例如 "./modernBERT_contrastive")
+    - checkpoint_root: str, 存放所有 checkpoint 子資料夾 (例如 "./models/modernBERT_contrastive")
     - metric: str, 要比較的指標名稱 (trainer_state.json 的 log_history 裡的 key)，
               例如 "eval_loss", "eval_acc1", "eval_acc5"
     - mode: str, 指定該 metric 是否「越小越好」（"min"）或「越大越好」（"max"）
@@ -90,7 +90,7 @@ if __name__ == "__main__":
         "--root", "-r",
         type=str,
         required=True,
-        help="checkpoint 的主目錄 (例如 './modernBERT_contrastive')"
+        help="checkpoint 的主目錄 (例如 './models/modernBERT_contrastive')"
     )
     parser.add_argument(
         "--metric", "-m",

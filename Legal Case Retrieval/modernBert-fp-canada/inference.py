@@ -7,61 +7,58 @@ from pathlib import Path
 import torch
 from transformers import AutoTokenizer
 
-# Ensure project root (contains the lcr package) is importable when running from repo root.
-PACKAGE_ROOT = Path(__file__).resolve().parents[1]
-if str(PACKAGE_ROOT) not in sys.path:
-    sys.path.insert(0, str(PACKAGE_ROOT))
-
-from lcr.task1_paths import get_task1_dir, get_task1_year
-
-TASK1_DIR = get_task1_dir()
-TASK1_YEAR = get_task1_year()
-
-from lcr.data import EmbeddingsData
-from find_best_model import find_best_checkpoint
-
-QUICK_TEST = False
-SCOPE_FILTER = True # 使用有依照判決書年份過濾的資料來訓練的模型推論
-
-# Shared utilities package (contains reusable helpers for retrieval pipelines)
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 if str(PACKAGE_ROOT) not in sys.path:
     sys.path.insert(0, str(PACKAGE_ROOT))
 
 from lcr.device import get_device
 from lcr.embeddings import process_directory_to_embeddings
+from lcr.task1_paths import get_env_flag, get_task1_dir, resolve_repo_path
+from repo_config import get_env, get_env_path
 
-# 將 modernBERT contrastive 模型加入路徑
-sys.path.append(os.path.join(os.path.dirname(__file__), "fine_tune"))
-from modernbert_contrastive_model import ModernBERTContrastive, ContrastiveConfig
+TASK1_DIR = Path(get_task1_dir())
+MODEL_NAME = get_env("TASK1_CANADA_RETRIEVAL_MODEL_NAME", required=True)
+CHECKPOINT_METRIC = get_env("TASK1_CHECKPOINT_METRIC", required=True)
+CHECKPOINT_MODE = get_env("TASK1_CHECKPOINT_MODE", required=True)
+QUICK_TEST = get_env_flag("TASK1_QUICK_TEST", required=True)
+assert MODEL_NAME is not None
+assert CHECKPOINT_METRIC is not None
+assert CHECKPOINT_MODE is not None
 
-# 檢查 GPU 是否可用
+from find_best_model import find_best_checkpoint
+
+FINE_TUNE_DIR = Path(__file__).resolve().parent / "fine_tune"
+if str(FINE_TUNE_DIR) not in sys.path:
+    sys.path.insert(0, str(FINE_TUNE_DIR))
+
+from modernbert_contrastive_model import ModernBERTContrastive
+
+
+def _resolved_env_path(env_name: str, default: Path) -> Path:
+    raw = os.getenv(env_name, "").strip()
+    resolved = resolve_repo_path(raw) if raw else default.resolve()
+    assert resolved is not None
+    return resolved
+
+
 device = get_device()
+base_encoder_dir = get_env_path("TASK1_CANADA_BASE_ENCODER_DIR", required=True)
+model_root_dir = get_env_path("TASK1_CANADA_MODEL_ROOT_DIR", required=True)
+assert base_encoder_dir is not None
+assert model_root_dir is not None
+if not base_encoder_dir.exists():
+    raise FileNotFoundError(f"找不到繼續預訓練後的 ModernBERT checkpoint: {base_encoder_dir}")
 
-# 繼續預訓練的 ModernBERT checkpoint（提供 backbone config）
-REPO_ROOT = Path(__file__).resolve().parents[2]
-BASE_ENCODER_DIR = (REPO_ROOT / "stage3-4096-encoder-laststep-777").resolve()
-if not BASE_ENCODER_DIR.exists():
-    raise FileNotFoundError(f"找不到繼續預訓練後的 ModernBERT checkpoint: {BASE_ENCODER_DIR}")
-
-# 找出最佳模型checkpoint
-dir_suffix = "_scopeFiltered" if SCOPE_FILTER else ""
-dir_suffix += "_test" if QUICK_TEST else ""
-model_root_dir = f"./modernBERT_contrastive_adaptive_fp_fp16_canada{dir_suffix}_{TASK1_YEAR}"
-best_loss_ckpt = find_best_checkpoint(model_root_dir, "eval_loss", mode="min")
+best_loss_ckpt = find_best_checkpoint(str(model_root_dir), "eval_loss", mode="min")
 print("最佳 eval_loss checkpoint:", best_loss_ckpt)
-best_acc1_ckpt = find_best_checkpoint(model_root_dir, "eval_acc1", mode="max")
+best_acc1_ckpt = find_best_checkpoint(str(model_root_dir), "eval_acc1", mode="max")
 print("最佳 eval_acc1 checkpoint:", best_acc1_ckpt)
-best_acc5_ckpt = find_best_checkpoint(model_root_dir, "eval_acc5", mode="max")
+best_acc5_ckpt = find_best_checkpoint(str(model_root_dir), "eval_acc5", mode="max")
 print("最佳 eval_acc5 checkpoint:", best_acc5_ckpt)
-best_f1_ckpt = find_best_checkpoint(model_root_dir, "eval_global_f1", mode="max")
-print("最佳 eval_global_f1 checkpoint:", best_f1_ckpt)
-best_loss_path, _ = best_loss_ckpt
-best_acc1_path, _ = best_acc1_ckpt
-best_acc5_path, _ = best_acc5_ckpt
+best_f1_ckpt = find_best_checkpoint(str(model_root_dir), CHECKPOINT_METRIC, mode=CHECKPOINT_MODE)
+print(f"最佳 {CHECKPOINT_METRIC} checkpoint:", best_f1_ckpt)
 best_f1_path, _ = best_f1_ckpt
 
-# 載入 tokenizer + 模型權重
 tokenizer = AutoTokenizer.from_pretrained(best_f1_path, trust_remote_code=True)
 encoder_kwargs = {
     "device_map": {"": str(device)},
@@ -70,16 +67,15 @@ encoder_kwargs = {
 }
 if device.type == "cuda":
     encoder_kwargs["attn_implementation"] = "flash_attention_2"
-# 印出 encoder_kwargs 以供除錯
 print("Encoder kwargs:", encoder_kwargs)
 model = ModernBERTContrastive.from_pretrained(
     best_f1_path,
-    encoder_model_name_or_path=str(BASE_ENCODER_DIR),
+    encoder_model_name_or_path=str(base_encoder_dir),
     encoder_kwargs=encoder_kwargs,
 )
 model = model.to(device)
 if device.type == "cuda":
-    model = model.half()  # projector 的精度也轉成 fp16
+    model = model.half()
 model = model.eval()
 
 
@@ -88,28 +84,27 @@ def encode_batch(batch_inputs):
         return model.encode(batch_inputs)
 
 
-# Path to the processed documents
-# 這裡固定同時編碼 processed 與 processed_new。
-# processed_new 保留給 THUIR-style query 實驗使用；目前本 repo 的 similarity 預設 query / candidate 都使用 processed。
-model_name = "modernBert_fp_fp16_canada" # 有SFT，且SFT是fp16
-print(f"------Using {model_name} to encode documents------\n")
-candidate_dataset_path = f"{TASK1_DIR}/processed"
-query_dataset_path = f"{TASK1_DIR}/processed_new"
+print(f"------Using {MODEL_NAME} to encode documents------\n")
+candidate_dataset_path = _resolved_env_path("TASK1_CANDIDATE_DIR", TASK1_DIR / "processed")
+query_dataset_path = _resolved_env_path("TASK1_QUERY_DIR", TASK1_DIR / "processed_new")
 suffix = "_test" if QUICK_TEST else ""
-candidate_output_path = f"{TASK1_DIR}/processed/processed_document_{model_name}_embeddings{suffix}.pkl"
-query_output_path = f"{TASK1_DIR}/processed_new/processed_new_document_{model_name}_embeddings{suffix}.pkl"
+candidate_output_path = _resolved_env_path(
+    "TASK1_CANDIDATE_EMBEDDINGS_OUTPUT",
+    TASK1_DIR / "processed" / f"processed_document_{MODEL_NAME}_embeddings{suffix}.pkl",
+)
+query_output_path = _resolved_env_path(
+    "TASK1_QUERY_EMBEDDINGS_OUTPUT",
+    TASK1_DIR / "processed_new" / f"processed_new_document_{MODEL_NAME}_embeddings{suffix}.pkl",
+)
 if QUICK_TEST:
     print("⚙️  QUICK_TEST 模式啟用：使用測試模型與輸出路徑")
 print("🔹 推論會同時輸出 processed 與 processed_new 兩份 embeddings。")
 
-# -------------------------------
-# Candidate 資料集處理
-# -------------------------------
 print("--------------------------")
 print(f"\n🔹 Encoding candidate documents located at {candidate_dataset_path} ...")
 candidate_data = process_directory_to_embeddings(
-    candidate_dataset_path,
-    candidate_output_path,
+    str(candidate_dataset_path),
+    str(candidate_output_path),
     tokenizer,
     encode_batch=encode_batch,
     batch_size=1,
@@ -119,14 +114,11 @@ candidate_data = process_directory_to_embeddings(
 )
 print(f"💾 Candidate embeddings saved to {candidate_output_path} ({len(candidate_data)} documents)")
 
-# -------------------------------
-# Query 資料集處理
-# -------------------------------
 print("--------------------------")
 print(f"\n🔹 Encoding query documents located at {query_dataset_path} ...")
 query_data = process_directory_to_embeddings(
-    query_dataset_path,
-    query_output_path,
+    str(query_dataset_path),
+    str(query_output_path),
     tokenizer,
     encode_batch=encode_batch,
     batch_size=1,

@@ -30,7 +30,14 @@ if str(PACKAGE_ROOT) not in sys.path:
 
 from lcr.data import EmbeddingsData
 from lcr.device import get_device
-from lcr.task1_paths import get_task1_dir, get_task1_year
+from lcr.task1_paths import (
+    get_task1_base_encoder_dir,
+    get_task1_dir,
+    get_task1_model_name,
+    get_task1_model_root_dir,
+    get_task1_year,
+    resolve_repo_path,
+)
 from cutoff_postprocess import build_cutoff_config, run_cutoff_postprocess, run_fixed_topk_postprocess
 
 # Reuse existing ModernBERT contrastive model class (core inference logic unchanged).
@@ -1811,8 +1818,29 @@ def run_train_valid_test(
 def parse_args() -> argparse.Namespace:
     task1_dir = Path(get_task1_dir())
     year = get_task1_year()
+    model_name = get_task1_model_name()
     cpu_count = max(os.cpu_count() or 4, 4)
     has_cuda = torch.cuda.is_available()
+    train_qid_default = resolve_repo_path(os.getenv("TASK1_TRAIN_QID_PATH")) or (task1_dir / "train_qid.tsv")
+    valid_qid_default = resolve_repo_path(os.getenv("TASK1_VALID_QID_PATH")) or (task1_dir / "valid_qid.tsv")
+    test_qid_default = resolve_repo_path(os.getenv("TASK1_TEST_QID_PATH")) or (task1_dir / "test_qid.tsv")
+    train_valid_scope_default = resolve_repo_path(os.getenv("COLIEE_LTR_VALID_SCOPE_PATH")) or (
+        task1_dir / "lht_process" / "scope_compare" / "query_candidate_scope_raw_plus0.json"
+    )
+    test_scope_default = resolve_repo_path(os.getenv("COLIEE_LTR_TEST_SCOPE_PATH")) or (
+        task1_dir / "lht_process" / "modernBert" / "query_candidate_scope_test_raw.json"
+    )
+    train_valid_embeddings_default = resolve_repo_path(os.getenv("TASK1_CANDIDATE_EMBEDDINGS_OUTPUT")) or (
+        task1_dir / "processed" / f"processed_document_{model_name}_embeddings.pkl"
+    )
+    test_embeddings_default = resolve_repo_path(os.getenv("TASK1_TEST_CANDIDATE_EMBEDDINGS_PATH")) or (
+        task1_dir / "processed_test" / f"processed_test_document_{model_name}_embeddings.pkl"
+    )
+    model_root_dir_default = Path(get_task1_model_root_dir(scope_filter=True, quick_test=False))
+    base_encoder_dir_default = Path(get_task1_base_encoder_dir())
+    output_dir_default = resolve_repo_path(os.getenv("COLIEE_LTR_OUTPUT_DIR")) or (
+        task1_dir / "lht_process" / "lightgbm_ltr_scope_raw"
+    )
 
     parser = argparse.ArgumentParser(
         description="Build COLIEE Task1 LTR features (LightGBM Ranker) and run train/valid/test pipeline."
@@ -1831,19 +1859,19 @@ def parse_args() -> argparse.Namespace:
         default=task1_dir / f"task1_train_labels_{year}_valid.json",
     )
 
-    parser.add_argument("--train-qid", type=Path, default=task1_dir / "train_qid.tsv")
-    parser.add_argument("--valid-qid", type=Path, default=task1_dir / "valid_qid.tsv")
-    parser.add_argument("--test-qid", type=Path, default=task1_dir / "test_qid.tsv")
+    parser.add_argument("--train-qid", type=Path, default=train_qid_default)
+    parser.add_argument("--valid-qid", type=Path, default=valid_qid_default)
+    parser.add_argument("--test-qid", type=Path, default=test_qid_default)
 
     parser.add_argument(
         "--train-valid-scope",
         type=Path,
-        default=task1_dir / "lht_process" / "scope_compare" / "query_candidate_scope_raw_plus0.json",
+        default=train_valid_scope_default,
     )
     parser.add_argument(
         "--test-scope",
         type=Path,
-        default=task1_dir / "lht_process" / "modernBert" / "query_candidate_scope_test_raw.json",
+        default=test_scope_default,
     )
 
     parser.add_argument(
@@ -1870,12 +1898,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--train-valid-embeddings",
         type=Path,
-        default=task1_dir / "processed" / "processed_document_modernBert_fp_fp16_embeddings.pkl",
+        default=train_valid_embeddings_default,
     )
     parser.add_argument(
         "--test-embeddings",
         type=Path,
-        default=task1_dir / "processed_test" / "processed_test_document_modernBert_fp_fp16_embeddings.pkl",
+        default=test_embeddings_default,
     )
 
     parser.add_argument(
@@ -1914,18 +1942,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--model-root-dir",
         type=Path,
-        default=Path(f"modernBERT_contrastive_adaptive_fp_fp16_scopeFiltered_{year}"),
+        default=model_root_dir_default,
     )
     parser.add_argument(
         "--base-encoder-dir",
         type=Path,
-        default=Path("modernbert-caselaw-accsteps-fp") / "checkpoint-29000",
+        default=base_encoder_dir_default,
     )
 
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=task1_dir / "lht_process" / "lightgbm_ltr_scope_raw",
+        default=output_dir_default,
     )
 
     parser.add_argument("--max-queries", type=int, default=0, help="Debug cap per split. 0 => full.")

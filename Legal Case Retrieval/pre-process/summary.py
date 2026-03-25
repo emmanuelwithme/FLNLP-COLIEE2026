@@ -1,6 +1,6 @@
 import os
-import re
 import sys
+import argparse
 from tqdm import tqdm
 import multiprocessing
 from functools import partial
@@ -10,10 +10,7 @@ PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 if str(PACKAGE_ROOT) not in sys.path:
     sys.path.insert(0, str(PACKAGE_ROOT))
 
-from lcr.task1_paths import get_task1_dir, get_task1_year
-
-TASK1_DIR = get_task1_dir()
-TASK1_YEAR = get_task1_year()
+from lcr.task1_paths import get_env_int, get_task1_dir, get_task1_year, resolve_repo_path
 
 def process_file(name, input_dir, output_dir):
     with open(f"{input_dir}/{name}", "r", encoding="utf-8") as f:
@@ -37,23 +34,37 @@ def process_file(name, input_dir, output_dir):
             return False
 
 
+def parse_args() -> argparse.Namespace:
+    task1_dir = Path(get_task1_dir())
+    task1_year = get_task1_year()
+    input_dir = resolve_repo_path(os.getenv("TASK1_TRAIN_RAW_DIR")) or (
+        task1_dir / f"task1_train_files_{task1_year}"
+    )
+    output_dir = resolve_repo_path(os.getenv("TASK1_SUMMARY_DIR")) or (task1_dir / "summary")
+    parser = argparse.ArgumentParser(description="Extract summaries from raw Task 1 cases.")
+    parser.add_argument("--input-dir", type=Path, default=input_dir)
+    parser.add_argument("--output-dir", type=Path, default=output_dir)
+    parser.add_argument(
+        "--num-workers",
+        type=int,
+        default=get_env_int("TASK1_SUMMARY_NUM_WORKERS", 0),
+        help="0 => use multiprocessing.cpu_count().",
+    )
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    input_dir = f"{TASK1_DIR}/task1_train_files_{TASK1_YEAR}"
-    output_dir = f"{TASK1_DIR}/summary"
-    
-    # 确保输出目录存在
+    args = parse_args()
+    input_dir = args.input_dir.resolve()
+    output_dir = args.output_dir.resolve()
+
     os.makedirs(output_dir, exist_ok=True)
-    
+
     names = os.listdir(input_dir)
-    
-    # 创建进程池，使用所有可用的CPU核心
-    num_cores = multiprocessing.cpu_count()
+    num_cores = args.num_workers if args.num_workers > 0 else multiprocessing.cpu_count()
     print(f"使用 {num_cores} 個CPU核心進行並行處理")
-    
-    # 创建偏函数，固定输入和输出目录参数
+
     process_func = partial(process_file, input_dir=input_dir, output_dir=output_dir)
-    
-    # 使用进程池并行处理所有文件
     with multiprocessing.Pool(processes=num_cores) as pool:
         results = list(tqdm(pool.imap(process_func, names), total=len(names), desc="处理文件"))
 

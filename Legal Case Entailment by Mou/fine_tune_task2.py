@@ -15,6 +15,19 @@ from typing import Dict, List, Optional, Sequence, Set
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from repo_config import (
+    get_env,
+    get_env_bool,
+    get_env_float,
+    get_env_int,
+    get_env_path,
+    load_dotenv_if_present,
+)
+
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -33,7 +46,6 @@ from modernbert_contrastive_model import ModernBERTContrastive
 random.seed(289)
 np.random.seed(289)
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
 LCR_ROOT = REPO_ROOT / "Legal Case Retrieval"
 if str(LCR_ROOT) not in sys.path:
     sys.path.insert(0, str(LCR_ROOT))
@@ -45,44 +57,6 @@ from lcr.retrieval import generate_similarity_artifacts
 
 _LATEST_RETRIEVAL_RESULTS = None
 _EVAL_EPOCH_TAG = None
-
-
-def _strip_quotes(value: str) -> str:
-    value = value.strip()
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
-        return value[1:-1].strip()
-    return value
-
-
-def parse_bool_env(name: str, default: bool = False) -> bool:
-    raw = os.getenv(name)
-    if raw is None:
-        return default
-    value = raw.strip().lower()
-    if value in {"1", "true", "yes", "y", "on"}:
-        return True
-    if value in {"0", "false", "no", "n", "off"}:
-        return False
-    return default
-
-
-def load_dotenv_if_present() -> None:
-    dotenv_path = REPO_ROOT / ".env"
-    if not dotenv_path.exists():
-        return
-    for raw_line in dotenv_path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if line.startswith("export "):
-            line = line[len("export ") :].strip()
-        if "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        key = key.strip()
-        if not key:
-            continue
-        os.environ.setdefault(key, _strip_quotes(value))
 
 
 def normalize_id(raw_id: object) -> str:
@@ -872,7 +846,7 @@ def resolve_best_checkpoint_by_metric(
 
 def main():
     load_dotenv_if_present()
-    enable_tf32 = parse_bool_env("TASK2_ENABLE_TF32", True)
+    enable_tf32 = get_env_bool("TASK2_ENABLE_TF32", required=True)
     if torch.cuda.is_available():
         torch.backends.cuda.matmul.allow_tf32 = enable_tf32
         torch.backends.cudnn.allow_tf32 = enable_tf32
@@ -880,8 +854,8 @@ def main():
         torch.set_float32_matmul_precision("high" if enable_tf32 else "highest")
 
     device = get_device()
-    year = os.getenv("COLIEE_TASK2_YEAR", "2026").strip()
-    configured_eval_topk = int(os.getenv("TASK2_EVAL_TOPK", "1"))
+    year = get_env("COLIEE_TASK2_YEAR", required=True)
+    configured_eval_topk = get_env_int("TASK2_EVAL_TOPK", required=True)
     primary_eval_topk = 1
     secondary_eval_topk = 2
     if configured_eval_topk != 1:
@@ -890,27 +864,12 @@ def main():
             "Early stopping is fixed to validation top-1 F1."
         )
 
-    prepared_dir = Path(
-        os.getenv(
-            "COLIEE_TASK2_PREPARED_DIR",
-            str(REPO_ROOT / "Legal Case Entailment by Mou" / "data" / f"task2_{year}_prepared"),
-        )
-    ).resolve()
-    init_model_root = Path(
-        os.getenv(
-            "TASK2_INIT_MODEL_ROOT",
-            str(REPO_ROOT / f"modernBERT_contrastive_adaptive_fp_fp16_scopeFiltered_{year}"),
-        )
-    ).resolve()
-    explicit_init_checkpoint = os.getenv("TASK2_INIT_CHECKPOINT", "").strip()
-    init_metric = os.getenv("TASK2_INIT_METRIC", "eval_global_f1").strip()
-    init_metric_mode = os.getenv("TASK2_INIT_METRIC_MODE", "max").strip()
-    output_dir = Path(
-        os.getenv(
-            "TASK2_OUTPUT_DIR",
-            str(REPO_ROOT / f"modernBERT_contrastive_adaptive_fp_fp16_scopeFiltered_{year}_para"),
-        )
-    ).resolve()
+    prepared_dir = get_env_path("COLIEE_TASK2_PREPARED_DIR", required=True)
+    init_model_root = get_env_path("TASK2_INIT_MODEL_ROOT", required=True)
+    explicit_init_checkpoint = get_env("TASK2_INIT_CHECKPOINT", default="", allow_empty=True) or ""
+    init_metric = get_env("TASK2_INIT_METRIC", required=True) or "eval_global_f1"
+    init_metric_mode = get_env("TASK2_INIT_METRIC_MODE", required=True) or "max"
+    output_dir = get_env_path("TASK2_OUTPUT_DIR", required=True)
 
     candidate_dir = prepared_dir / "processed_candidates"
     query_dir = prepared_dir / "processed_queries"
@@ -935,27 +894,27 @@ def main():
         if not path.exists():
             raise FileNotFoundError(f"Required path not found: {path}")
 
-    task2_mode = normalize_mode(os.getenv("TASK2_MODE", "full"))
+    task2_mode = normalize_mode(get_env("TASK2_MODE", required=True) or "full")
     quick_test = task2_mode == "test"
-    test_seed = int(os.getenv("TASK2_TEST_SEED", "289"))
-    test_train_query_limit = int(os.getenv("TASK2_TEST_TRAIN_QUERY_LIMIT", "16"))
-    test_valid_query_limit = int(os.getenv("TASK2_TEST_VALID_QUERY_LIMIT", "8"))
-    test_num_train_epochs = float(os.getenv("TASK2_TEST_NUM_TRAIN_EPOCHS", "1"))
-    test_max_steps = int(os.getenv("TASK2_TEST_MAX_STEPS", "0"))
-    test_logging_steps = int(os.getenv("TASK2_TEST_LOGGING_STEPS", "10"))
-    test_save_total_limit = int(os.getenv("TASK2_TEST_SAVE_TOTAL_LIMIT", "2"))
-    test_early_stopping_patience = int(os.getenv("TASK2_TEST_EARLY_STOPPING_PATIENCE", "2"))
+    test_seed = get_env_int("TASK2_TEST_SEED", required=True)
+    test_train_query_limit = get_env_int("TASK2_TEST_TRAIN_QUERY_LIMIT", required=True)
+    test_valid_query_limit = get_env_int("TASK2_TEST_VALID_QUERY_LIMIT", required=True)
+    test_num_train_epochs = get_env_float("TASK2_TEST_NUM_TRAIN_EPOCHS", required=True)
+    test_max_steps = get_env_int("TASK2_TEST_MAX_STEPS", required=True)
+    test_logging_steps = get_env_int("TASK2_TEST_LOGGING_STEPS", required=True)
+    test_save_total_limit = get_env_int("TASK2_TEST_SAVE_TOTAL_LIMIT", required=True)
+    test_early_stopping_patience = get_env_int("TASK2_TEST_EARLY_STOPPING_PATIENCE", required=True)
 
-    train_batch_size = int(os.getenv("TASK2_TRAIN_BATCH_SIZE", "4"))
-    eval_batch_size = int(os.getenv("TASK2_EVAL_BATCH_SIZE", str(train_batch_size)))
-    grad_accum_steps = int(os.getenv("TASK2_GRAD_ACCUM_STEPS", "1"))
-    dataloader_num_workers = int(os.getenv("TASK2_DATALOADER_NUM_WORKERS", "8"))
-    dataloader_pin_memory = parse_bool_env("TASK2_DATALOADER_PIN_MEMORY", True)
-    dataloader_persistent_workers = parse_bool_env("TASK2_DATALOADER_PERSISTENT_WORKERS", True)
-    use_gradient_checkpointing = parse_bool_env("TASK2_GRADIENT_CHECKPOINTING", False)
-    retrieval_batch_size = int(os.getenv("TASK2_RETRIEVAL_BATCH_SIZE", "8"))
-    retrieval_max_length = int(os.getenv("TASK2_RETRIEVAL_MAX_LENGTH", "4096"))
-    cache_texts = parse_bool_env("TASK2_CACHE_TEXTS", True)
+    train_batch_size = get_env_int("TASK2_TRAIN_BATCH_SIZE", required=True)
+    eval_batch_size = get_env_int("TASK2_EVAL_BATCH_SIZE", required=True)
+    grad_accum_steps = get_env_int("TASK2_GRAD_ACCUM_STEPS", required=True)
+    dataloader_num_workers = get_env_int("TASK2_DATALOADER_NUM_WORKERS", required=True)
+    dataloader_pin_memory = get_env_bool("TASK2_DATALOADER_PIN_MEMORY", required=True)
+    dataloader_persistent_workers = get_env_bool("TASK2_DATALOADER_PERSISTENT_WORKERS", required=True)
+    use_gradient_checkpointing = get_env_bool("TASK2_GRADIENT_CHECKPOINTING", required=True)
+    retrieval_batch_size = get_env_int("TASK2_RETRIEVAL_BATCH_SIZE", required=True)
+    retrieval_max_length = get_env_int("TASK2_RETRIEVAL_MAX_LENGTH", required=True)
+    cache_texts = get_env_bool("TASK2_CACHE_TEXTS", required=True)
 
     query_candidates_map = load_query_candidates_map(query_candidates_map_path)
     all_train_qids = load_query_ids_from_utils(train_qid_path)
@@ -1090,11 +1049,11 @@ def main():
     )
     print(f"valid_dataset size: {len(valid_dataset)}")
 
-    num_train_epochs = float(os.getenv("TASK2_NUM_TRAIN_EPOCHS", "20"))
-    logging_steps = int(os.getenv("TASK2_LOGGING_STEPS", "50"))
-    save_total_limit = int(os.getenv("TASK2_SAVE_TOTAL_LIMIT", "20"))
-    early_stopping_patience = int(os.getenv("TASK2_EARLY_STOPPING_PATIENCE", "5"))
-    max_steps = int(os.getenv("TASK2_MAX_STEPS", "-1"))
+    num_train_epochs = get_env_float("TASK2_NUM_TRAIN_EPOCHS", required=True)
+    logging_steps = get_env_int("TASK2_LOGGING_STEPS", required=True)
+    save_total_limit = get_env_int("TASK2_SAVE_TOTAL_LIMIT", required=True)
+    early_stopping_patience = get_env_int("TASK2_EARLY_STOPPING_PATIENCE", required=True)
+    max_steps = get_env_int("TASK2_MAX_STEPS", required=True)
     if quick_test:
         num_train_epochs = test_num_train_epochs
         logging_steps = test_logging_steps
@@ -1187,7 +1146,7 @@ def main():
         f"candidates="
         f"{len(adaptive_candidate_files_override) if adaptive_candidate_files_override else len(list(candidate_dir.glob('*.txt')))}"
     )
-    resume_ckpt = os.getenv("TASK2_RESUME_CHECKPOINT", "").strip()
+    resume_ckpt = get_env("TASK2_RESUME_CHECKPOINT", default="", allow_empty=True) or ""
     if resume_ckpt:
         print(f"resume_from_checkpoint={resume_ckpt}")
         trainer.train(resume_from_checkpoint=resume_ckpt)

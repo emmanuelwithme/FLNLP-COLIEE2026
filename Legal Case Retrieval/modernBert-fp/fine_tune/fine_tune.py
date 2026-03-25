@@ -41,7 +41,18 @@ PACKAGE_ROOT = Path(__file__).resolve().parents[2]
 if str(PACKAGE_ROOT) not in sys.path:
     sys.path.insert(0, str(PACKAGE_ROOT))
 
-from lcr.task1_paths import get_task1_dir, get_task1_year
+from lcr.task1_paths import (
+    get_env,
+    get_env_flag,
+    get_env_float,
+    get_env_int,
+    get_env_path,
+    get_task1_base_encoder_dir,
+    get_task1_dir,
+    get_task1_model_root_dir,
+    get_task1_year,
+    resolve_repo_path,
+)
 
 TASK1_DIR = get_task1_dir()
 TASK1_YEAR = get_task1_year()
@@ -67,10 +78,10 @@ _EVAL_EPOCH_TAG = None  # 用於在評估時以 epoch 編號命名輸出檔
 # QUICK TEST MODE
 # -------------
 # 切換快速測試模式：True 只取極少量資料以便快速驗證流程
-QUICK_TEST = False # 如果要正式訓練，設成 False
-SCOPE_FILTER = True  # 依 query 年份限制候選庫，避免抽到未來判決書
-RETRIEVAL_BATCH_SIZE = max(1, int(os.getenv("TASK1_RETRIEVAL_BATCH_SIZE", "8")))
-INIT_TEMPERATURE = float(os.getenv("TASK1_INIT_TEMPERATURE", "0.55555"))
+QUICK_TEST = get_env_flag("TASK1_QUICK_TEST", required=True)
+SCOPE_FILTER = get_env_flag("TASK1_SCOPE_FILTER", required=True)
+RETRIEVAL_BATCH_SIZE = max(1, get_env_int("TASK1_RETRIEVAL_BATCH_SIZE", required=True))
+INIT_TEMPERATURE = get_env_float("TASK1_INIT_TEMPERATURE", required=True)
 if INIT_TEMPERATURE <= 0:
     raise ValueError(f"TASK1_INIT_TEMPERATURE must be > 0, got: {INIT_TEMPERATURE}")
 
@@ -80,8 +91,8 @@ _QT_TRAIN_QIDS = None        # List[str]
 _QT_VALID_QIDS = None        # List[str]
 
 # QUICK_TEST 數量上限（可由環境變數覆寫）
-QT_CAND_K = 20   # 候選檔案上限
-QT_QUERY_K = 5  # 訓練 query 數量上限，以及BM25選出的驗證資料(valid_dataset，用來計算eval_loss, eval_acc1, eval_acc5)數量上限
+QT_CAND_K = max(1, get_env_int("TASK1_QUICK_TEST_CAND_K", required=True))
+QT_QUERY_K = max(1, get_env_int("TASK1_QUICK_TEST_QUERY_K", required=True))
 
 
 def evaluate_model_retrieval(model, tokenizer, device, candidate_dataset_path, query_dataset_path, 
@@ -982,7 +993,7 @@ def main():
     # 1. 檢查 CPU / GPU
     device = get_device()
 
-    ckpt_dir = (PACKAGE_ROOT.parent / "modernbert-caselaw-accsteps-fp" / "checkpoint-29000").resolve()
+    ckpt_dir = Path(get_task1_base_encoder_dir())
     if not ckpt_dir.exists():
         raise FileNotFoundError(f"找不到繼續預訓練後的 ModernBERT checkpoint: {ckpt_dir}")
 
@@ -1012,23 +1023,25 @@ def main():
     query_dataset_path = f"{TASK1_DIR}/processed" #query可以用processed或processed_new資料夾下的文件
     train_qid_path = f"{TASK1_DIR}/train_qid.tsv"
     positive_train_json_path = f"{TASK1_DIR}/task1_train_labels_{TASK1_YEAR}_train.json"
-    valid_json_path = f"{TASK1_DIR}/lht_process/modernBert/finetune_data/contrastive_bm25_hard_negative_top100_random15_valid.json"
     valid_qid_path = f"{TASK1_DIR}/valid_qid.tsv"  # Define valid_qid_path
     labels_path = f"{TASK1_DIR}/task1_train_labels_{TASK1_YEAR}.json"  # Define labels_path
-    finetune_data_dir = f"{TASK1_DIR}/lht_process/modernBert/finetune_data"
     retrieval_batch_size = RETRIEVAL_BATCH_SIZE
 
-    base_output_dir = "./modernBERT_contrastive_adaptive_fp_fp16"
-    if SCOPE_FILTER:
-        base_output_dir += "_scopeFilteredRaw"
-    if QUICK_TEST:
-        base_output_dir += "_test"
-        finetune_data_dir += "_test"
-    base_output_dir += f"_{TASK1_YEAR}"
+    configured_finetune_data_dir = get_env_path("TASK1_FINETUNE_DATA_DIR", required=True)
+    assert configured_finetune_data_dir is not None
+    finetune_data_dir = str(configured_finetune_data_dir)
+    valid_json_path = f"{finetune_data_dir}/contrastive_bm25_hard_negative_top100_random15_valid.json"
+
+    base_output_dir = get_task1_model_root_dir(scope_filter=SCOPE_FILTER, quick_test=QUICK_TEST)
     os.makedirs(finetune_data_dir, exist_ok=True)
 
-    default_scope_path = f"{TASK1_DIR}/lht_process/modernBert/query_candidate_scope.json"
+    default_scope_path = get_env_path("TASK1_SCOPE_PATH", required=True)
+    assert default_scope_path is not None
+    default_scope_path = str(default_scope_path)
     env_scope_path = os.getenv("LCR_QUERY_CANDIDATE_SCOPE_JSON")
+    print(f"🔹 base encoder dir: {ckpt_dir}")
+    print(f"🔹 output dir: {base_output_dir}")
+    print(f"🔹 finetune data dir: {finetune_data_dir}")
     if SCOPE_FILTER:
         if os.path.exists(default_scope_path):
             os.environ["LCR_QUERY_CANDIDATE_SCOPE_JSON"] = default_scope_path
@@ -1173,8 +1186,8 @@ def main():
         print(f"group {i}: lr={g['lr']}  weight_decay={g['weight_decay']}  #params={sz}")
 
     # 7. 可中斷後續訓：優先使用指定checkpoint，否則自動找 output_dir 最新checkpoint
-    explicit_resume_ckpt = os.getenv("TASK1_RESUME_FROM_CHECKPOINT", "").strip()
-    auto_resume_flag = os.getenv("TASK1_AUTO_RESUME", "1").strip().lower() not in {"0", "false", "no"}
+    explicit_resume_ckpt = get_env("TASK1_RESUME_FROM_CHECKPOINT", default="") or ""
+    auto_resume_flag = get_env_flag("TASK1_AUTO_RESUME", required=True)
     resume_from_checkpoint = None
     if explicit_resume_ckpt:
         if not os.path.isdir(explicit_resume_ckpt):

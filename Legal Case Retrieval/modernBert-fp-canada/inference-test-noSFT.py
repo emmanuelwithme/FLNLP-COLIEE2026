@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 
 import torch
 from torch.nn.functional import cosine_similarity
@@ -8,7 +9,13 @@ from transformers import AutoModel, AutoTokenizer
 from tqdm import tqdm
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-CKPT_DIR = REPO_ROOT / "stage3-4096-encoder-laststep-777"
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from repo_config import get_env_path
+
+CKPT_DIR = get_env_path("TASK1_CANADA_BASE_ENCODER_DIR", required=True)
+assert CKPT_DIR is not None
 MAX_LENGTH = 4096
 
 if torch.cuda.is_available():
@@ -25,7 +32,7 @@ if not CKPT_DIR.exists():
 
 # 初始化 tokenizer / model（使用續訓的 ModernBERT checkpoint）
 tokenizer = AutoTokenizer.from_pretrained(
-    CKPT_DIR,
+    str(CKPT_DIR),
     model_max_length=MAX_LENGTH,
     use_fast=True,
     trust_remote_code=True,
@@ -37,7 +44,7 @@ model_kwargs = {"torch_dtype": dtype, "trust_remote_code": True, "device_map": {
 if device.type == "cuda":
     model_kwargs["attn_implementation"] = "flash_attention_2"
 
-model = AutoModel.from_pretrained(CKPT_DIR, **model_kwargs)
+model = AutoModel.from_pretrained(str(CKPT_DIR), **model_kwargs)
 model = model.eval()
 
 def get_embeddings(texts, batch_size: int = 8):

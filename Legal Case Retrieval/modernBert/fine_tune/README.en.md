@@ -2,73 +2,74 @@
 
 [中文](README.md) | [Task 1 Overview](../../README.en.md)
 
-This directory keeps older modernBERT fine-tuning code and BM25 hard-negative utilities. It is not the maintained main training path for Task 1; the maintained workflow has moved to `../../modernBert-fp/`.
+This directory contains BM25 hard-negative generators and a set of additional contrastive training utilities.
 
-However, part of this directory is still used by the current workflow:
+## Main Role
 
-- `create_bm25_hard_negative_data_top100_random15.py`
-  `run_pre_finetune_2026.sh` still uses this script to generate BM25 hard negatives before dense fine-tuning.
-
-## Current Role of This Directory
-
-### Still actively used
-
-- BM25 hard-negative generation utilities
-- older contrastive-training modules kept for historical reference
-
-### Not recommended as the current main path
-
-- `fine_tune.py`
-- `fine_tune_noprojector.py`
-- these older training entrypoints should not replace `modernBert-fp/fine_tune/fine_tune.py`
-
-## File Guide
-
-- `create_bm25_hard_negative_data.py`
-  Older BM25 hard-negative generator.
-- `create_bm25_hard_negative_data_top100_random15.py`
-  The version still used by the maintained workflow. It samples 15 negatives from BM25 top-100.
-- `create_config.py`
-  Older config-generation utility.
-- `fine_tune.py`
-  Older contrastive training script.
-- `fine_tune_noprojector.py`
-  Older contrastive training script without a projector.
-- `modernbert_contrastive_model.py`
-  Older contrastive model definition.
-
-## How This Directory Is Used Today
-
-If you follow the repo-root Task 1 main flow:
-
-```bash
-bash run_pre_finetune_2026.sh
-```
-
-one of its steps is:
+The repo-root Task 1 preprocessing flow calls:
 
 ```bash
 python "Legal Case Retrieval/modernBert/fine_tune/create_bm25_hard_negative_data_top100_random15.py"
 ```
 
-That script writes:
+This script converts BM25 train / valid rankings into contrastive data for dense fine-tuning.
 
-- `coliee_dataset/task1/<YEAR>/lht_process/modernBert/finetune_data/contrastive_bm25_hard_negative_top100_random15_train.json`
-- `coliee_dataset/task1/<YEAR>/lht_process/modernBert/finetune_data/contrastive_bm25_hard_negative_top100_random15_valid.json`
+## Main Files
 
-Those files are then consumed downstream by `modernBert-fp/fine_tune/fine_tune.py` as part of the maintained Task 1 preparation flow.
+- `create_bm25_hard_negative_data_top100_random15.py`: samples 15 negatives from BM25 top-100.
+- `create_bm25_hard_negative_data.py`: another hard-negative generator.
+- `create_config.py`: training config utility.
+- `fine_tune.py`: contrastive training entry point.
+- `fine_tune_noprojector.py`: training entry point without a projector.
+- `modernbert_contrastive_model.py`: model definition.
 
-## If You Only Want the Maintained Task 1 Workflow
+## Hard-Negative Generator Inputs
 
-Go directly to:
+- BM25 train ranking
+- BM25 valid ranking
+- train labels
+- valid labels
+
+The repo wrapper passes:
+
+- `TASK1_BM25_DIR/output_bm25_train.tsv`
+- `TASK1_BM25_DIR/output_bm25_valid.tsv`
+- `TASK1_TRAIN_SPLIT_LABELS_PATH`
+- `TASK1_VALID_SPLIT_LABELS_PATH`
+
+## Hard-Negative Generator Outputs
+
+- `TASK1_FINETUNE_DATA_DIR/contrastive_bm25_hard_negative_top100_random15_train.json`
+- `TASK1_FINETUNE_DATA_DIR/contrastive_bm25_hard_negative_top100_random15_valid.json`
+
+Common arguments:
+
+- `--top-k`
+- `--max-negatives`
+- `--random-seed`
+
+Matching repo-root environment variables:
+
+- `TASK1_HARD_NEG_TOPK`
+- `TASK1_HARD_NEG_MAX_NEGATIVES`
+- `TASK1_HARD_NEG_SEED`
+
+## Direct Example
+
+```bash
+python "Legal Case Retrieval/modernBert/fine_tune/create_bm25_hard_negative_data_top100_random15.py" \
+  --bm25-train-path "./coliee_dataset/task1/2026/lht_process/BM25/output_bm25_train.tsv" \
+  --bm25-valid-path "./coliee_dataset/task1/2026/lht_process/BM25/output_bm25_valid.tsv" \
+  --train-labels-path "./coliee_dataset/task1/2026/task1_train_labels_2026_train.json" \
+  --valid-labels-path "./coliee_dataset/task1/2026/task1_train_labels_2026_valid.json" \
+  --train-output-path "./coliee_dataset/task1/2026/lht_process/modernBert/finetune_data/contrastive_bm25_hard_negative_top100_random15_train.json" \
+  --valid-output-path "./coliee_dataset/task1/2026/lht_process/modernBert/finetune_data/contrastive_bm25_hard_negative_top100_random15_valid.json" \
+  --top-k 100 \
+  --max-negatives 15 \
+  --random-seed 289
+```
+
+For the main dense training and inference flow, see:
 
 - [../../modernBert-fp/README.en.md](../../modernBert-fp/README.en.md)
 - [../../lightgbm/README.en.md](../../lightgbm/README.en.md)
-
-You do not need to operate most of the older training scripts in this directory directly.
-
-## Additional Note
-
-- Historically, this directory's documentation mixed older modernBERT training notes with later `modernBert-fp` concepts
-- after reorganization, it should be treated mainly as "historical experiments plus the still-used BM25 hard-negative utility"
-- for new main-path experiments, use `modernBert-fp/` as the source of truth

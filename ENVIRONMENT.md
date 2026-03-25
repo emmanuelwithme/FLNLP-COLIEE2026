@@ -10,7 +10,7 @@
 
 - `Legal Case Retrieval/`
 - `Legal Case Entailment by Mou/`
-- 根目錄維護中的 shell wrappers
+- repo root 維護中的 shell wrappers
 
 不包含：
 
@@ -38,8 +38,15 @@ conda activate FLNLP-COLIEE2026-WSL
 ## `.env` 與 conda 環境的關係
 
 - `environment.frozen.yml` 記錄的是 Python 與套件環境
-- repo root 的 `.env` 則記錄資料路徑、年份與部分 workflow 參數
+- repo root `.env` 記錄的是資料路徑、模型路徑、年份與 workflow 參數
+- 共享模型根目錄預設是 `./models`，由 `COLIEE_MODELS_DIR` 控制
 - 兩者用途不同，通常都需要
+
+目前狀態：
+
+- `.env` 已改成版本控制內的公開設定檔
+- 我在 `2026-03-25` 檢查過，裡面沒有密碼、token 或其他憑證
+- 若之後需要放敏感資訊，請不要放回這份 repo 內的 `.env`
 
 ## 系統層需求
 

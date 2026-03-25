@@ -38,8 +38,15 @@ conda activate FLNLP-COLIEE2026-WSL
 ## `.env` vs the Conda Environment
 
 - `environment.frozen.yml` records the Python and package environment
-- the repo-root `.env` records dataset paths, year settings, and some workflow parameters
+- the repo-root `.env` records dataset paths, model paths, year settings, and workflow parameters
+- the shared model root defaults to `./models` and is controlled by `COLIEE_MODELS_DIR`
 - they serve different purposes, and most runs need both
+
+Current status:
+
+- the repo-root `.env` is now intentionally versioned
+- checked on `2026-03-25`: it contains no passwords, tokens, or other credentials
+- if you later need secrets, do not store them in this repository `.env`
 
 ## System-Level Requirements
 

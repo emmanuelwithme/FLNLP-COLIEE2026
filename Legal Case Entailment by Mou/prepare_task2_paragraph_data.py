@@ -5,35 +5,15 @@ import argparse
 import json
 import os
 import random
+import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
-def _strip_quotes(value: str) -> str:
-    value = value.strip()
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
-        return value[1:-1].strip()
-    return value
-
-
-def load_dotenv_if_present() -> None:
-    repo_root = Path(__file__).resolve().parents[1]
-    dotenv_path = repo_root / ".env"
-    if not dotenv_path.exists():
-        return
-    for raw_line in dotenv_path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if line.startswith("export "):
-            line = line[len("export ") :].strip()
-        if "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        key = key.strip()
-        if not key:
-            continue
-        os.environ.setdefault(key, _strip_quotes(value))
+from repo_config import get_env, get_env_float, get_env_int, get_env_path, load_dotenv_if_present
 
 
 def normalize_numeric_stem(raw_id: object, width: int = 3) -> str:
@@ -288,24 +268,9 @@ def prepare_dataset(
 
 def parse_args() -> argparse.Namespace:
     load_dotenv_if_present()
-    repo_root = Path(__file__).resolve().parents[1]
-    task2_year = os.getenv("COLIEE_TASK2_YEAR", "2026").strip()
-    task2_root = os.getenv("COLIEE_TASK2_ROOT", "./coliee_dataset/task2").strip()
-    task2_dir = os.getenv(
-        "COLIEE_TASK2_DIR",
-        str(Path(task2_root) / f"task2_train_files_{task2_year}"),
-    ).strip()
-    default_input_dir = Path(task2_dir)
-    if not default_input_dir.is_absolute():
-        default_input_dir = repo_root / default_input_dir
-
-    prepared_dir_env = os.getenv(
-        "COLIEE_TASK2_PREPARED_DIR",
-        f"./Legal Case Entailment by Mou/data/task2_{task2_year}_prepared",
-    ).strip()
-    default_output_dir = Path(prepared_dir_env)
-    if not default_output_dir.is_absolute():
-        default_output_dir = repo_root / default_output_dir
+    default_input_dir = get_env_path("COLIEE_TASK2_DIR", required=True)
+    default_output_dir = get_env_path("COLIEE_TASK2_PREPARED_DIR", required=True)
+    labels_file = get_env("TASK2_LABELS_FILENAME", required=True)
     parser = argparse.ArgumentParser(
         description="Prepare COLIEE task2 paragraph-level data for ModernBERT contrastive fine-tuning."
     )
@@ -313,12 +278,12 @@ def parse_args() -> argparse.Namespace:
         "--input-dir",
         type=Path,
         default=default_input_dir,
-        help="Path to task2_train_files_2026 directory.",
+        help="Path to the task2 train-files directory.",
     )
     parser.add_argument(
         "--labels-file",
         type=str,
-        default="task2_train_labels_2026.json",
+        default=labels_file,
         help="Label JSON filename under --input-dir.",
     )
     parser.add_argument(
@@ -327,10 +292,10 @@ def parse_args() -> argparse.Namespace:
         default=default_output_dir,
         help="Prepared output directory.",
     )
-    parser.add_argument("--train-ratio", type=float, default=0.8)
-    parser.add_argument("--split-seed", type=int, default=42)
-    parser.add_argument("--negative-seed", type=int, default=289)
-    parser.add_argument("--max-negatives", type=int, default=15)
+    parser.add_argument("--train-ratio", type=float, default=get_env_float("TASK2_PREPARE_TRAIN_RATIO", required=True))
+    parser.add_argument("--split-seed", type=int, default=get_env_int("TASK2_PREPARE_SPLIT_SEED", required=True))
+    parser.add_argument("--negative-seed", type=int, default=get_env_int("TASK2_PREPARE_NEGATIVE_SEED", required=True))
+    parser.add_argument("--max-negatives", type=int, default=get_env_int("TASK2_PREPARE_MAX_NEGATIVES", required=True))
     return parser.parse_args()
 
 

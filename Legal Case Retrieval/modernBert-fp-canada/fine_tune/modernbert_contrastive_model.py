@@ -20,6 +20,7 @@ if str(PACKAGE_ROOT) not in sys.path:
     sys.path.insert(0, str(PACKAGE_ROOT))
 
 from lcr.device import get_device
+from repo_config import get_env_path
 
 
 class ContrastiveConfig(ModernBertConfig):
@@ -213,17 +214,18 @@ class ModernBERTContrastive(PreTrainedModel):
 if __name__ == "__main__":
     device = get_device()
 
-    # 假設已有一個以 HF 格式保存好的訓練輸出目錄：
-    checkpoint_dir = "./modernBERT_contrastive_adaptive_fp_fp16_canada/checkpoint-4068"
-    base_encoder_dir = "./stage3-4096-encoder-laststep-777"
+    checkpoint_dir = get_env_path("TASK1_CANADA_EXAMPLE_CHECKPOINT_DIR", required=True)
+    base_encoder_dir = get_env_path("TASK1_CANADA_BASE_ENCODER_DIR", required=True)
+    assert checkpoint_dir is not None
+    assert base_encoder_dir is not None
 
     # 1) 先載 tokenizer（checkpoint 內已有 tokenizer 檔）
-    tokenizer = AutoTokenizer.from_pretrained(checkpoint_dir, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(str(checkpoint_dir), trust_remote_code=True)
 
     # 2) 一行載入：包含 encoder + projector head
     model = ModernBERTContrastive.from_pretrained(
-        checkpoint_dir,
-        encoder_model_name_or_path=base_encoder_dir,
+        str(checkpoint_dir),
+        encoder_model_name_or_path=str(base_encoder_dir),
         encoder_kwargs={
             "device_map": device,
             "torch_dtype": torch.float16,

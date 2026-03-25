@@ -5,6 +5,7 @@ import argparse
 import csv
 import json
 import os
+import sys
 from collections import Counter
 from pathlib import Path
 from typing import Iterable, List
@@ -15,31 +16,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from transformers import AutoTokenizer
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
-def _strip_quotes(value: str) -> str:
-    value = value.strip()
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
-        return value[1:-1].strip()
-    return value
-
-
-def load_dotenv_if_present(repo_root: Path) -> None:
-    dotenv_path = repo_root / ".env"
-    if not dotenv_path.exists():
-        return
-    for raw_line in dotenv_path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if line.startswith("export "):
-            line = line[len("export ") :].strip()
-        if "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        key = key.strip()
-        if not key:
-            continue
-        os.environ.setdefault(key, _strip_quotes(value))
+from repo_config import get_env, get_env_int, get_env_path, load_dotenv_if_present
 
 
 def write_counter_csv(path: Path, counter: Counter) -> None:
@@ -131,16 +112,8 @@ def save_bar_from_counter(
 
 
 def parse_args() -> argparse.Namespace:
-    repo_root = Path(__file__).resolve().parents[1]
-    load_dotenv_if_present(repo_root)
-    year = os.getenv("COLIEE_TASK2_YEAR", "2026").strip()
-    prepared_dir_env = os.getenv(
-        "COLIEE_TASK2_PREPARED_DIR",
-        f"./Legal Case Entailment by Mou/data/task2_{year}_prepared",
-    ).strip()
-    prepared_dir = Path(prepared_dir_env)
-    if not prepared_dir.is_absolute():
-        prepared_dir = repo_root / prepared_dir
+    load_dotenv_if_present(REPO_ROOT)
+    prepared_dir = get_env_path("COLIEE_TASK2_PREPARED_DIR", required=True)
 
     parser = argparse.ArgumentParser(
         description="Compute task2 statistics with answerdotai/ModernBERT-base tokenizer."
@@ -149,9 +122,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--tokenizer-name",
         type=str,
-        default="answerdotai/ModernBERT-base",
+        default=get_env("TASK2_STATS_TOKENIZER_NAME", required=True),
     )
-    parser.add_argument("--batch-size", type=int, default=128)
+    parser.add_argument("--batch-size", type=int, default=get_env_int("TASK2_STATS_BATCH_SIZE", required=True))
     parser.add_argument(
         "--output-dir",
         type=Path,
@@ -167,7 +140,7 @@ def main() -> None:
     output_dir = (args.output_dir.resolve() if args.output_dir else (prepared_dir / "stats"))
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    year = os.getenv("COLIEE_TASK2_YEAR", "2026").strip()
+    year = get_env("COLIEE_TASK2_YEAR", required=True)
     labels_path = prepared_dir / f"task2_train_labels_{year}_flat.json"
     query_dir = prepared_dir / "processed_queries"
     candidate_dir = prepared_dir / "processed_candidates"

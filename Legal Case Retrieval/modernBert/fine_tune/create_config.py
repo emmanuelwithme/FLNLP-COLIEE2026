@@ -2,8 +2,16 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
+from pathlib import Path
 from transformers import AutoTokenizer
 from modernbert_contrastive_model import ModernBERTContrastive, ContrastiveConfig
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from repo_config import get_env_path
 
 def convert_all_checkpoints(root_dir: str):
     """
@@ -56,9 +64,9 @@ def convert_all_checkpoints(root_dir: str):
 
 
 if __name__ == "__main__":
-    # 把 root_dir 改成你的 modernBERT_contrastive 主目录
-    root_dir = "./modernBERT_contrastive"
-    convert_all_checkpoints(root_dir)
+    root_dir = get_env_path("TASK1_LEGACY_CONVERT_ROOT_DIR", required=True)
+    assert root_dir is not None
+    convert_all_checkpoints(str(root_dir))
 # 这样 old_ckpt 文件夹下就会有：
 #   ├ config.json         ← 包含所有 ModernBERT-base + projector_hidden_size + temperature
 #   ├ pytorch_model.bin   ← encoder + projector 权重

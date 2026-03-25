@@ -4,42 +4,31 @@ set -euo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../../.." && pwd)"
 
-_CALLER_COLIEE_TASK1_YEAR="${COLIEE_TASK1_YEAR:-}"
-_CALLER_COLIEE_TASK1_ROOT="${COLIEE_TASK1_ROOT:-}"
-_CALLER_COLIEE_TASK1_DIR="${COLIEE_TASK1_DIR:-}"
+# shellcheck source=scripts/common_env.sh
+source "${REPO_ROOT}/scripts/common_env.sh"
+load_env_file_if_present "${REPO_ROOT}/.env"
 
-if [ -f "${REPO_ROOT}/.env" ]; then
-  set -a
-  . "${REPO_ROOT}/.env"
-  set +a
-fi
+require_envs \
+  TASK1_BM25_TEST_DIR \
+  TASK1_BM25_K1 \
+  TASK1_BM25_B \
+  TASK1_BM25_TEST_THREADS \
+  TASK1_BM25_TEST_BATCH_SIZE
 
-if [ -n "${_CALLER_COLIEE_TASK1_YEAR}" ]; then
-  COLIEE_TASK1_YEAR="${_CALLER_COLIEE_TASK1_YEAR}"
-fi
-if [ -n "${_CALLER_COLIEE_TASK1_ROOT}" ]; then
-  COLIEE_TASK1_ROOT="${_CALLER_COLIEE_TASK1_ROOT}"
-fi
-if [ -n "${_CALLER_COLIEE_TASK1_DIR}" ]; then
-  COLIEE_TASK1_DIR="${_CALLER_COLIEE_TASK1_DIR}"
-fi
+resolve_env_path_var "${REPO_ROOT}" TASK1_BM25_TEST_DIR
 
-COLIEE_TASK1_YEAR="${COLIEE_TASK1_YEAR:-2025}"
-COLIEE_TASK1_ROOT="${COLIEE_TASK1_ROOT:-./coliee_dataset/task1}"
-TASK1_DIR="${COLIEE_TASK1_DIR:-${COLIEE_TASK1_ROOT}/${COLIEE_TASK1_YEAR}}"
-
-HITS="${BM25_TEST_HITS:-2000}"
-OUTPUT_PATH="${BM25_TEST_OUTPUT_PATH:-${TASK1_DIR}/lht_process/BM25_test/output_bm25_test.tsv}"
+HITS="${BM25_TEST_HITS:-${TASK1_BM25_TEST_HITS}}"
+OUTPUT_PATH="${BM25_TEST_OUTPUT_PATH:-${TASK1_BM25_TEST_DIR}/output_bm25_test.tsv}"
 
 python -m pyserini.search.lucene \
-  --index "${TASK1_DIR}/lht_process/BM25_test/index" \
-  --topics "${TASK1_DIR}/lht_process/BM25_test/query_test.tsv" \
+  --index "${TASK1_BM25_TEST_DIR}/index" \
+  --topics "${TASK1_BM25_TEST_DIR}/query_test.tsv" \
   --output "${OUTPUT_PATH}" \
   --bm25 \
-  --k1 3 \
-  --b 1 \
+  --k1 "${TASK1_BM25_K1}" \
+  --b "${TASK1_BM25_B}" \
   --hits "${HITS}" \
-  --threads 10 \
-  --batch-size 16
+  --threads "${TASK1_BM25_TEST_THREADS}" \
+  --batch-size "${TASK1_BM25_TEST_BATCH_SIZE}"
 
 echo "BM25 test retrieval done: ${OUTPUT_PATH}"

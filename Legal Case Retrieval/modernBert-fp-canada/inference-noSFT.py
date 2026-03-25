@@ -12,6 +12,7 @@ if str(PACKAGE_ROOT) not in sys.path:
     sys.path.insert(0, str(PACKAGE_ROOT))
 
 from lcr.task1_paths import get_task1_dir, get_task1_year
+from repo_config import get_env_path
 
 TASK1_DIR = get_task1_dir()
 TASK1_YEAR = get_task1_year()
@@ -23,8 +24,8 @@ MAX_LENGTH = 4096
 MODEL_NAME = "modernBert_fp_canada"
 QUICK_TEST = False
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-CKPT_DIR = REPO_ROOT / "stage3-4096-encoder-laststep-777"
+CKPT_DIR = get_env_path("TASK1_CANADA_BASE_ENCODER_DIR", required=True)
+assert CKPT_DIR is not None
 
 def load_tokenizer_and_model(device: torch.device):
     if not CKPT_DIR.exists():
@@ -32,7 +33,7 @@ def load_tokenizer_and_model(device: torch.device):
     ckpt_dir = CKPT_DIR
 
     tokenizer = AutoTokenizer.from_pretrained(
-        ckpt_dir,
+        str(ckpt_dir),
         model_max_length=MAX_LENGTH,
         use_fast=True,
         trust_remote_code=True,
@@ -49,7 +50,7 @@ def load_tokenizer_and_model(device: torch.device):
     if device.type == "cuda":
         model_kwargs["attn_implementation"] = "flash_attention_2"
 
-    model = AutoModel.from_pretrained(ckpt_dir, **model_kwargs)
+    model = AutoModel.from_pretrained(str(ckpt_dir), **model_kwargs)
     model = model.eval()
 
     def encode_batch(batch_inputs):

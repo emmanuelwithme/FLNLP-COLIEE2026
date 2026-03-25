@@ -48,7 +48,7 @@ QUICK_TEST = _get_env_bool("TASK1_CHUNKAGG_INFER_QUICK_TEST", False)
 # 中文註解：TASK1_CHUNKAGG_INFER_SCOPE_FILTER=1 時，推論預設對應 scopeFilteredRaw 的訓練輸出目錄。
 SCOPE_FILTER = _get_env_bool("TASK1_CHUNKAGG_INFER_SCOPE_FILTER", True)
 # 中文註解：TASK1_CHUNKAGG_MODEL_NAME 控制 embeddings 檔名與 ranking 輸出資料夾名稱。
-MODEL_NAME = os.getenv("TASK1_CHUNKAGG_MODEL_NAME", "modernBert_fp_chunkAgg_fp16")
+MODEL_NAME = os.environ["TASK1_CHUNKAGG_MODEL_NAME"].strip()
 # 中文註解：TASK1_RETRIEVAL_BATCH_SIZE 控制一次編碼多少篇文件。
 EMBED_BATCH_SIZE = max(1, int(os.getenv("TASK1_RETRIEVAL_BATCH_SIZE", "1")))
 # 中文註解：TASK1_CHUNKAGG_INFER_QT_LIMIT 控制 QUICK_TEST 模式最多取幾篇文件。
@@ -56,12 +56,7 @@ QUICK_TEST_LIMIT = max(1, int(os.getenv("TASK1_CHUNKAGG_INFER_QT_LIMIT", "20")))
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 # 中文註解：TASK1_CHUNKAGG_BASE_ENCODER_DIR 指向 continued pretraining 後的 backbone checkpoint。
-BASE_ENCODER_DIR = Path(
-    os.getenv(
-        "TASK1_CHUNKAGG_BASE_ENCODER_DIR",
-        str(REPO_ROOT / "modernbert-caselaw-accsteps-fp" / "checkpoint-29000"),
-    )
-)
+BASE_ENCODER_DIR = Path(os.environ["TASK1_CHUNKAGG_BASE_ENCODER_DIR"]).resolve()
 
 
 def find_best_checkpoint(checkpoint_root: str | Path, metric: str, mode: str) -> tuple[str, float]:
@@ -153,12 +148,7 @@ def main() -> None:
     dir_suffix = "_scopeFilteredRaw" if SCOPE_FILTER else ""
     dir_suffix += "_test" if QUICK_TEST else ""
     # 中文註解：TASK1_CHUNKAGG_OUTPUT_DIR 指向 chunkAgg 訓練輸出的根目錄。
-    model_root_dir = Path(
-        os.getenv(
-            "TASK1_CHUNKAGG_OUTPUT_DIR",
-            f"./modernBERT_contrastive_adaptive_fp_fp16_chunkAgg{dir_suffix}_{TASK1_YEAR}",
-        )
-    )
+    model_root_dir = Path(os.environ["TASK1_CHUNKAGG_OUTPUT_DIR"]).resolve()
     if not model_root_dir.exists():
         raise FileNotFoundError(f"找不到 chunkAgg 訓練輸出目錄: {model_root_dir}")
 

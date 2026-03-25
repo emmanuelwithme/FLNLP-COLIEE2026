@@ -9,7 +9,7 @@ PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 if str(PACKAGE_ROOT) not in sys.path:
     sys.path.insert(0, str(PACKAGE_ROOT))
 
-from lcr.task1_paths import get_task1_dir, get_task1_year
+from lcr.task1_paths import get_env_float, get_env_int, get_task1_dir, get_task1_year, resolve_repo_path
 
 TASK1_DIR = get_task1_dir()
 TASK1_YEAR = get_task1_year()
@@ -87,12 +87,17 @@ def split_dataset(input_file, train_ratio=0.8, seed=42, output_dir=None):
     
     return train_file, valid_file, valid_qid_file
 
+def parse_args() -> argparse.Namespace:
+    input_default = resolve_repo_path(os.getenv("TASK1_TRAIN_LABELS_PATH")) or Path(TASK1_DIR) / f"task1_train_labels_{TASK1_YEAR}.json"
+    output_default = resolve_repo_path(os.getenv("COLIEE_TASK1_DIR")) or Path(TASK1_DIR)
+    parser = argparse.ArgumentParser(description="Split Task 1 labels into train/valid JSON files.")
+    parser.add_argument("--input-file", type=Path, default=input_default)
+    parser.add_argument("--train-ratio", type=float, default=get_env_float("TASK1_SPLIT_TRAIN_RATIO", 0.8))
+    parser.add_argument("--seed", type=int, default=get_env_int("TASK1_SPLIT_SEED", 42))
+    parser.add_argument("--output-dir", type=Path, default=output_default)
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    # 需要修改的參數
-    input_file = rf"{TASK1_DIR}/task1_train_labels_{TASK1_YEAR}.json"  # 輸入的標籤檔案路徑
-    train_ratio = 0.8  # 訓練集比例
-    seed = 42  # 隨機種子
-    output_dir = rf"{TASK1_DIR}"  # 輸出目錄，如果為None則使用輸入檔案所在目錄
-    
-    # 執行分割
-    split_dataset(input_file, train_ratio, seed, output_dir) 
+    args = parse_args()
+    split_dataset(str(args.input_file), float(args.train_ratio), int(args.seed), str(args.output_dir))

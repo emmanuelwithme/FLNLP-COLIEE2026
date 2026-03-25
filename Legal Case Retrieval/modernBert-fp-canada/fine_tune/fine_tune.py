@@ -40,7 +40,7 @@ PACKAGE_ROOT = Path(__file__).resolve().parents[2]
 if str(PACKAGE_ROOT) not in sys.path:
     sys.path.insert(0, str(PACKAGE_ROOT))
 
-from lcr.task1_paths import get_task1_dir, get_task1_year
+from lcr.task1_paths import get_env_flag, get_env_int, get_env_path, get_task1_dir, get_task1_year
 
 TASK1_DIR = get_task1_dir()
 TASK1_YEAR = get_task1_year()
@@ -66,8 +66,8 @@ _EVAL_EPOCH_TAG = None  # 用於在評估時以 epoch 編號命名輸出檔
 # QUICK TEST MODE
 # -------------
 # 切換快速測試模式：True 只取極少量資料以便快速驗證流程
-QUICK_TEST = False # 如果要正式訓練，設成 False
-SCOPE_FILTER = True  # 依 query 年份限制候選庫，避免抽到未來判決書
+QUICK_TEST = get_env_flag("TASK1_QUICK_TEST", required=True)
+SCOPE_FILTER = get_env_flag("TASK1_SCOPE_FILTER", required=True)
 
 # 由 main() 設定，用於 generate_similarity_artifacts 的覆寫資料
 _QT_CANDIDATE_FILES = None   # List[str] 檔名（包含 .txt）
@@ -75,8 +75,8 @@ _QT_TRAIN_QIDS = None        # List[str]
 _QT_VALID_QIDS = None        # List[str]
 
 # QUICK_TEST 數量上限（可由環境變數覆寫）
-QT_CAND_K = 20   # 候選檔案上限
-QT_QUERY_K = 5  # 訓練 query 數量上限，以及BM25選出的驗證資料(valid_dataset，用來計算eval_loss, eval_acc1, eval_acc5)數量上限
+QT_CAND_K = max(1, get_env_int("TASK1_QUICK_TEST_CAND_K", required=True))
+QT_QUERY_K = max(1, get_env_int("TASK1_QUICK_TEST_QUERY_K", required=True))
 
 
 def evaluate_model_retrieval(model, tokenizer, device, candidate_dataset_path, query_dataset_path, 
@@ -845,7 +845,8 @@ def main():
     # 1. 檢查 CPU / GPU
     device = get_device()
 
-    ckpt_dir = (PACKAGE_ROOT.parent / "stage3-4096-encoder-laststep-777").resolve()
+    ckpt_dir = get_env_path("TASK1_CANADA_BASE_ENCODER_DIR", required=True)
+    assert ckpt_dir is not None
     if not ckpt_dir.exists():
         raise FileNotFoundError(f"找不到繼續預訓練後的 ModernBERT checkpoint: {ckpt_dir}")
 
@@ -877,15 +878,12 @@ def main():
     valid_json_path = f"{TASK1_DIR}/lht_process/modernBert/finetune_data/contrastive_bm25_hard_negative_top100_random15_valid.json"
     valid_qid_path = f"{TASK1_DIR}/valid_qid.tsv"  # Define valid_qid_path
     labels_path = f"{TASK1_DIR}/task1_train_labels_{TASK1_YEAR}.json"  # Define labels_path
-    finetune_data_dir = f"{TASK1_DIR}/lht_process/modernBert_fp_fp16_canada/finetune_data"
-
-    base_output_dir = "./modernBERT_contrastive_adaptive_fp_fp16_canada"
-    if SCOPE_FILTER:
-        base_output_dir += "_scopeFiltered"
-    if QUICK_TEST:
-        base_output_dir += "_test"
-        finetune_data_dir += "_test"
-    base_output_dir += f"_{TASK1_YEAR}"
+    finetune_data_dir = get_env_path("TASK1_CANADA_FINETUNE_DATA_DIR", required=True)
+    base_output_dir = get_env_path("TASK1_CANADA_MODEL_ROOT_DIR", required=True)
+    assert finetune_data_dir is not None
+    assert base_output_dir is not None
+    finetune_data_dir = str(finetune_data_dir)
+    base_output_dir = str(base_output_dir)
     os.makedirs(finetune_data_dir, exist_ok=True)
 
     default_scope_path = f"{TASK1_DIR}/lht_process/modernBert/query_candidate_scope.json"
