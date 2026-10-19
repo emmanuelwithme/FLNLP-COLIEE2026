@@ -31,8 +31,15 @@ The most direct preparation order is:
 ```bash
 bash run_pre_finetune.sh
 python "Legal Case Retrieval/modernBert-fp/fine_tune/fine_tune.py"
-bash run_test_retrieval.sh
+python "Legal Case Retrieval/modernBert-fp/inference.py"
+python "Legal Case Retrieval/modernBert-fp/similarity_and_rank.py"
+python "Legal Case Retrieval/pre-process/process_test_files.py" --help
+python "Legal Case Retrieval/pre-process/prepare_test_pipeline_inputs.py" --help
+LCR_TEST_MODE=1 python "Legal Case Retrieval/modernBert-fp/inference.py"
+LCR_TEST_MODE=1 python "Legal Case Retrieval/modernBert-fp/similarity_and_rank.py"
 ```
+
+Build the test scope, BM25 test index, and submission separately with `build_query_candidate_scope.py`, the test scripts under `lexical models/linux/`, and `utils/trec_to_submission.py`. The former `run_test_retrieval.sh` wrapper has been removed.
 
 ## Step 1: Features, training, and fixed top-k
 

@@ -19,8 +19,9 @@ This directory provides Task 1 dense encoder training, embedding generation, and
 ```bash
 bash run_pre_finetune.sh
 python "Legal Case Retrieval/modernBert-fp/fine_tune/fine_tune.py"
-bash run_train_valid_inference_eval.sh
-bash run_test_retrieval.sh
+python "Legal Case Retrieval/modernBert-fp/inference.py"
+python "Legal Case Retrieval/modernBert-fp/similarity_and_rank.py"
+python "Legal Case Retrieval/utils/eval.py"
 ```
 
 ### Reuse an existing checkpoint
@@ -34,8 +35,17 @@ Set:
 Then run:
 
 ```bash
-bash run_train_valid_inference_eval.sh
-bash run_test_retrieval.sh
+python "Legal Case Retrieval/modernBert-fp/inference.py"
+python "Legal Case Retrieval/modernBert-fp/similarity_and_rank.py"
+python "Legal Case Retrieval/utils/eval.py"
+```
+
+For the test split, first use `process_test_files.py`, `prepare_test_pipeline_inputs.py`, and `build_query_candidate_scope.py` to prepare `processed_test/`, `test_qid.tsv`, and the scope. Then run:
+
+```bash
+LCR_TEST_MODE=1 python "Legal Case Retrieval/modernBert-fp/inference.py"
+LCR_TEST_MODE=1 python "Legal Case Retrieval/modernBert-fp/similarity_and_rank.py"
+python "Legal Case Retrieval/utils/trec_to_submission.py" --help
 ```
 
 If you want LTR afterward:
@@ -125,7 +135,7 @@ Inference and ranking:
 TASK1_MODEL_ROOT_DIR=./models/my_task1_model \
 TASK1_BASE_ENCODER_DIR=./models/my_encoder/checkpoint-29000 \
 TASK1_RETRIEVAL_MODEL_NAME=my_task1_model \
-bash run_test_retrieval.sh
+python "Legal Case Retrieval/modernBert-fp/inference.py"
 ```
 
 The repo-root `.env` provides defaults, and shell variables can override them for a single run.

@@ -1763,11 +1763,15 @@ def run_train_valid_test(
         kind="mergesort",
     )
     df_valid_out_raw["pred_rank"] = df_valid_out_raw.groupby("query_id", sort=False).cumcount() + 1
-    valid_query_ids = list(dict.fromkeys(df_valid_out_raw["query_id"].tolist()))
+    valid_query_ids = list(dict.fromkeys(df_valid["query_id"].tolist()))
 
     valid_pred_raw_path = output_dir / "valid_predictions_raw.csv"
     df_valid_out_raw.to_csv(valid_pred_raw_path, index=False)
-    raw_f1, raw_p, raw_r = _compute_topk_metrics(df_valid_out_raw, topk=5)
+    raw_f1, raw_p, raw_r = _compute_topk_metrics(
+        df_valid_out_raw,
+        topk=5,
+        all_query_ids=valid_query_ids,
+    )
     logger.info("Valid raw top5: F1=%.6f Precision=%.6f Recall=%.6f", raw_f1, raw_p, raw_r)
 
     df_valid_out, _ = _apply_scope_post_filter(

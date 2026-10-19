@@ -25,6 +25,7 @@ from .embeddings import (
 from .metrics import (
     classification_report,
     random_guess_baseline,
+    random_guess_predictions,
     rel_file_to_dict,
     trec_file_to_dict,
 )
@@ -51,6 +52,7 @@ __all__ = [
     "process_directory_to_embeddings",
     "classification_report",
     "random_guess_baseline",
+    "random_guess_predictions",
     "rel_file_to_dict",
     "trec_file_to_dict",
     "record_result",

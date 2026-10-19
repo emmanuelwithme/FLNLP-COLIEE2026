@@ -12,6 +12,7 @@ This directory contains the full COLIEE Task 1 workflow and is the primary worki
 - `lightgbm/`: feature generation, `LGBMRanker` training, and cutoff post-processing.
 - `lcr/`: shared Task 1 modules.
 - `modernBert-fp-chunkAgg/`: chunk-aggregation experiment path.
+- `modernBert-fp-chunkAgg-v6/`: isolated multi-chunk experiment aligned to the single-chunk negative-sampling formula.
 - `modernBert/fine_tune/`: BM25 hard-negative generation and additional training utilities.
 
 ## Dataset Layout
@@ -69,23 +70,33 @@ The downstream steps will reuse the same settings.
 ### 3. Train / valid retrieval check
 
 ```bash
-bash run_train_valid_inference_eval.sh
+python "Legal Case Retrieval/modernBert-fp/inference.py"
+python "Legal Case Retrieval/modernBert-fp/similarity_and_rank.py"
+python "Legal Case Retrieval/utils/eval.py"
 ```
 
 This step writes:
 
-- train / valid BM25 rankings
 - dense embeddings
 - dense dot / cosine rankings
-- train / valid metric summaries
+- train / valid metrics appended to `Legal Case Retrieval/results/experiment_results.csv`
 
 ### 4. Test retrieval and submission
 
+The former `run_test_retrieval.sh` wrapper has been removed. Use the composable preprocessing, indexing, inference, ranking, and submission CLIs directly; add `--help` where shown to inspect their path arguments:
+
 ```bash
-bash run_test_retrieval.sh
+python "Legal Case Retrieval/pre-process/process_test_files.py" --help
+python "Legal Case Retrieval/pre-process/prepare_test_pipeline_inputs.py" --help
+python "Legal Case Retrieval/pre-process/build_query_candidate_scope.py" --help
+bash "Legal Case Retrieval/lexical models/linux/index_test.sh"
+bash "Legal Case Retrieval/lexical models/linux/query_search_test.sh"
+LCR_TEST_MODE=1 python "Legal Case Retrieval/modernBert-fp/inference.py"
+LCR_TEST_MODE=1 python "Legal Case Retrieval/modernBert-fp/similarity_and_rank.py"
+python "Legal Case Retrieval/utils/trec_to_submission.py" --help
 ```
 
-This step writes:
+After configuring the input and output paths in `.env`, these steps write:
 
 - `processed_test/`
 - `test_qid.tsv`
@@ -137,4 +148,5 @@ Most frequently adjusted variables:
 - Dense retrieval: [modernBert-fp/README.en.md](./modernBert-fp/README.en.md)
 - LightGBM rerank: [lightgbm/README.en.md](./lightgbm/README.en.md)
 - Chunk aggregation: [modernBert-fp-chunkAgg/README.en.md](./modernBert-fp-chunkAgg/README.en.md)
+- Chunk aggregation v6: [modernBert-fp-chunkAgg-v6/README.en.md](./modernBert-fp-chunkAgg-v6/README.en.md)
 - BM25 hard negatives and additional training utilities: [modernBert/fine_tune/README.en.md](./modernBert/fine_tune/README.en.md)

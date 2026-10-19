@@ -22,6 +22,12 @@ task1_FLNLPLTR.txt
 task1_FLNLPLTRTOP5.txt
 # 段落向量融合端到端訓練的環境變數
 !Legal Case Retrieval/modernBert-fp-chunkAgg/.env
+!Legal Case Retrieval/modernBert-fp-chunkAgg-v6/.env
 
 # 暫時先忽略paper
-paper/
+paper_COLIEE/
+paper_ASAIL/
+thesis_figures/
+
+# 新的一些想法記錄
+some_idea/

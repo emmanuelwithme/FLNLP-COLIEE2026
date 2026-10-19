@@ -16,19 +16,15 @@
 - 每個候選段落會寫成一個 `processed_candidates/<caseid><paragraphid>.txt`
 - label 會攤平成 paragraph-level 正例
 
-## 一鍵流程
+## 執行流程
 
 ```bash
-bash run_task2_finetune.sh
+python "Legal Case Entailment by Mou/prepare_task2_paragraph_data.py"
+python "Legal Case Entailment by Mou/analyze_task2_stats.py"
+python "Legal Case Entailment by Mou/fine_tune_task2.py"
 ```
 
-這支 wrapper 會：
-
-- 讀取 repo root `.env`
-- 啟用 `CONDA_ENV_NAME`
-- 建立 paragraph-level 資料
-- 視設定產生統計
-- 執行 `fine_tune_task2.py`
+三個入口都會讀取 repo root `.env`；請先啟用 `CONDA_ENV_NAME` 指定的環境。統計步驟可省略，但訓練前必須先完成 paragraph-level 資料準備。
 
 ## 手動分步流程
 
@@ -108,17 +104,16 @@ python "Legal Case Entailment by Mou/fine_tune_task2.py"
 - `TASK2_RETRIEVAL_BATCH_SIZE`
 - `TASK2_RETRIEVAL_MAX_LENGTH`
 
-wrapper 控制：
+執行模式：
 
 - `TASK2_MODE`
-- `TASK2_SKIP_STATS`
 
 ## 測試模式
 
 ```bash
-TASK2_MODE=test bash run_task2_finetune.sh
+TASK2_MODE=test python "Legal Case Entailment by Mou/fine_tune_task2.py"
 ```
 
-測試模式會使用較小的 query 子集，並在輸出目錄名稱加上 `_test`。
+完成資料準備後，測試模式會使用較小的 query 子集，並在輸出目錄名稱加上 `_test`。若不需要統計，直接略過第二個命令即可。
 
 repo root `.env` 會提供預設值，shell 變數可做單次覆寫。

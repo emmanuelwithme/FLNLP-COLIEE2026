@@ -14,10 +14,11 @@ if str(PACKAGE_ROOT) not in sys.path:
     sys.path.insert(0, str(PACKAGE_ROOT))
 
 from env_utils import load_chunkagg_dotenv
+from content_utils import filter_id_text_pairs, summarize_rejected_documents
 
 _LOADED_DOTENV_PATH = load_chunkagg_dotenv(__file__)
 
-from lcr.task1_paths import get_task1_dir, get_task1_year
+from lcr.task1_paths import get_env_path, get_task1_dir, get_task1_year
 
 TASK1_DIR = get_task1_dir()
 TASK1_YEAR = get_task1_year()
@@ -45,14 +46,27 @@ def _get_env_bool(name: str, default: bool) -> bool:
 
 # 中文註解：TASK1_CHUNKAGG_INFER_QUICK_TEST=1 時，只編碼少量文件做 smoke test。
 QUICK_TEST = _get_env_bool("TASK1_CHUNKAGG_INFER_QUICK_TEST", False)
-# 中文註解：TASK1_CHUNKAGG_INFER_SCOPE_FILTER=1 時，推論預設對應 scopeFilteredRaw 的訓練輸出目錄。
-SCOPE_FILTER = _get_env_bool("TASK1_CHUNKAGG_INFER_SCOPE_FILTER", True)
+INFERENCE_FP16 = _get_env_bool("TASK1_CHUNKAGG_FP16", True)
+INFERENCE_BF16 = _get_env_bool("TASK1_CHUNKAGG_BF16", False)
+if INFERENCE_FP16 and INFERENCE_BF16:
+    raise ValueError("TASK1_CHUNKAGG_FP16 and TASK1_CHUNKAGG_BF16 cannot both be enabled")
+INFERENCE_AUTOCAST_DTYPE = (
+    torch.bfloat16 if INFERENCE_BF16 else torch.float16 if INFERENCE_FP16 else None
+)
 # 中文註解：TASK1_CHUNKAGG_MODEL_NAME 控制 embeddings 檔名與 ranking 輸出資料夾名稱。
 MODEL_NAME = os.environ["TASK1_CHUNKAGG_MODEL_NAME"].strip()
 # 中文註解：TASK1_RETRIEVAL_BATCH_SIZE 控制一次編碼多少篇文件。
 EMBED_BATCH_SIZE = max(1, int(os.getenv("TASK1_RETRIEVAL_BATCH_SIZE", "1")))
 # 中文註解：TASK1_CHUNKAGG_INFER_QT_LIMIT 控制 QUICK_TEST 模式最多取幾篇文件。
 QUICK_TEST_LIMIT = max(1, int(os.getenv("TASK1_CHUNKAGG_INFER_QT_LIMIT", "20")))
+MIN_DOCUMENT_CONTENT_CHARS = max(
+    1,
+    int(os.getenv("TASK1_CHUNKAGG_MIN_DOCUMENT_CHARS", "100")),
+)
+CHUNK_SELECTION_STRATEGY = os.getenv(
+    "TASK1_CHUNKAGG_LONG_DOCUMENT_SELECTION",
+    "head_middle_tail",
+).strip().lower()
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 # 中文註解：TASK1_CHUNKAGG_BASE_ENCODER_DIR 指向 continued pretraining 後的 backbone checkpoint。
@@ -119,6 +133,22 @@ def encode_directory(
     device: torch.device,
 ) -> EmbeddingsData:
     ids, texts = read_text_directory(directory)
+    ids, texts, rejected_lengths = filter_id_text_pairs(
+        ids,
+        texts,
+        minimum_characters=MIN_DOCUMENT_CONTENT_CHARS,
+    )
+    if rejected_lengths:
+        print(
+            f"🔹 {directory.name} content filter rejected "
+            f"{len(rejected_lengths)} documents: "
+            f"{summarize_rejected_documents(rejected_lengths)}"
+        )
+    if not ids:
+        raise RuntimeError(
+            f"No documents in {directory} have at least "
+            f"{MIN_DOCUMENT_CONTENT_CHARS} non-whitespace characters"
+        )
     if QUICK_TEST:
         ids = ids[:QUICK_TEST_LIMIT]
         texts = texts[:QUICK_TEST_LIMIT]
@@ -131,9 +161,11 @@ def encode_directory(
         batch_size=EMBED_BATCH_SIZE,
         max_length=DOCUMENT_CHUNK_LENGTH,
         max_chunks=MAX_DOCUMENT_CHUNKS,
+        chunk_selection_strategy=CHUNK_SELECTION_STRATEGY,
         device=device,
         show_progress=True,
         progress_desc=f"Encoding {directory.name}",
+        autocast_dtype=INFERENCE_AUTOCAST_DTYPE,
     )
     data = EmbeddingsData(ids, embeddings)
     data.save(output_path)
@@ -145,19 +177,27 @@ def main() -> None:
     if not BASE_ENCODER_DIR.exists():
         raise FileNotFoundError(f"找不到 continued pretraining checkpoint: {BASE_ENCODER_DIR}")
 
-    dir_suffix = "_scopeFilteredRaw" if SCOPE_FILTER else ""
-    dir_suffix += "_test" if QUICK_TEST else ""
     # 中文註解：TASK1_CHUNKAGG_OUTPUT_DIR 指向 chunkAgg 訓練輸出的根目錄。
     model_root_dir = Path(os.environ["TASK1_CHUNKAGG_OUTPUT_DIR"]).resolve()
     if not model_root_dir.exists():
         raise FileNotFoundError(f"找不到 chunkAgg 訓練輸出目錄: {model_root_dir}")
 
-    best_loss_ckpt = find_best_checkpoint(model_root_dir, "eval_loss", mode="min")
-    print("最佳 eval_loss checkpoint:", best_loss_ckpt)
-    best_acc1_ckpt = find_best_checkpoint(model_root_dir, "eval_acc1", mode="max")
-    print("最佳 eval_acc1 checkpoint:", best_acc1_ckpt)
-    best_acc5_ckpt = find_best_checkpoint(model_root_dir, "eval_acc5", mode="max")
-    print("最佳 eval_acc5 checkpoint:", best_acc5_ckpt)
+    scope_path = get_env_path(
+        "TASK1_CHUNKAGG_SCOPE_PATH",
+        default=f"{TASK1_DIR}/lht_process/scope_compare/query_candidate_scope_raw_plus0_empty_exclude.json",
+        required=True,
+    )
+    assert scope_path is not None
+    if not scope_path.exists():
+        raise FileNotFoundError(f"找不到 TASK1_CHUNKAGG_SCOPE_PATH: {scope_path}")
+    os.environ["LCR_QUERY_CANDIDATE_SCOPE_JSON"] = str(scope_path)
+    print(f"🔹 推論/後續 ranking 使用必要的 query candidate scope: {scope_path}")
+
+    for metric, mode in (("eval_loss", "min"), ("eval_acc1", "max"), ("eval_acc5", "max")):
+        try:
+            print(f"最佳 {metric} checkpoint:", find_best_checkpoint(model_root_dir, metric, mode))
+        except ValueError as exc:
+            print(f"⚠️ {exc}")
     best_f1_ckpt = find_best_checkpoint(model_root_dir, "eval_global_f1", mode="max")
     print("最佳 eval_global_f1 checkpoint:", best_f1_ckpt)
     best_f1_path, _ = best_f1_ckpt
@@ -181,6 +221,15 @@ def main() -> None:
     print(f"   - Max chunks: {MAX_DOCUMENT_CHUNKS}")
     print(f"   - Chunk length: {DOCUMENT_CHUNK_LENGTH}")
     print(f"   - Chunk microbatch size: {CHUNK_MICROBATCH_SIZE}")
+    print(f"   - Long-document chunk selection: {CHUNK_SELECTION_STRATEGY}")
+    print(
+        "   - Minimum document content: "
+        f"{MIN_DOCUMENT_CONTENT_CHARS} non-whitespace characters"
+    )
+    print(
+        "   - Retrieval precision: "
+        + (str(INFERENCE_AUTOCAST_DTYPE) if INFERENCE_AUTOCAST_DTYPE is not None else "float32")
+    )
 
     suffix = "_test" if QUICK_TEST else ""
     # 中文註解：可用 env 覆寫輸入資料夾，方便切換不同預處理版本。

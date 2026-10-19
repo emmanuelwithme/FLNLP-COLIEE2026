@@ -4,31 +4,50 @@ import os
 from pathlib import Path
 
 
+def _strip_quotes(value: str) -> str:
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+        return value[1:-1].strip()
+    return value
+
+
+def _read_dotenv(path: Path) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[len("export ") :].strip()
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        if not key:
+            continue
+        values[key] = _strip_quotes(value)
+    return values
+
+
 def load_chunkagg_dotenv(start_path: str | Path | None = None) -> Path | None:
-    """Load the nearest `.env` for modernBert-fp-chunkAgg if present."""
+    """Load repo and chunkAgg `.env` files while preserving shell overrides."""
     base_path = Path(start_path).resolve() if start_path is not None else Path(__file__).resolve()
     if base_path.is_file():
         search_path = base_path.parent
     else:
         search_path = base_path
 
-    for candidate_dir in [search_path, *search_path.parents]:
-        env_path = candidate_dir / ".env"
-        if not env_path.exists():
-            continue
+    search_dirs = [search_path, *search_path.parents]
+    env_paths = [candidate_dir / ".env" for candidate_dir in reversed(search_dirs)]
+    existing_env_paths = [env_path for env_path in env_paths if env_path.exists()]
+    original_keys = set(os.environ)
 
-        for raw_line in env_path.read_text(encoding="utf-8").splitlines():
-            line = raw_line.strip()
-            if not line or line.startswith("#") or "=" not in line:
+    loaded_path: Path | None = None
+    for env_path in existing_env_paths:
+        loaded_path = env_path
+        for key, value in _read_dotenv(env_path).items():
+            if key in original_keys:
                 continue
-            key, value = line.split("=", 1)
-            key = key.strip()
-            value = value.strip()
-            if not key:
-                continue
-            if value and len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
-                value = value[1:-1]
-            os.environ.setdefault(key, value)
-        return env_path
+            os.environ[key] = value
 
-    return None
+    return loaded_path

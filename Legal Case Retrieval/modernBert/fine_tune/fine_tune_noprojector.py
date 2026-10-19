@@ -132,18 +132,21 @@ def evaluate_model_retrieval(model, tokenizer, device, candidate_dataset_path, q
         trec_path = str(artifacts.trec_path)
         answer_dict = trec_file_convert(trec_path, topk)
         
-        # 準備評估資料
+        # 準備評估資料。所有 labeled query 都要進分母；若 scope 為空或
+        # ranking 沒有該 query，視為空答案，而不是把該 query 略過。
         list_answer_ohe = []  # 預測答案
         list_label_ohe = []   # 真實答案
+        missing_pred_qids = 0
         
         for qid in rel_dict.keys():
-            if qid in answer_dict:
-                one_answer = answer_dict[qid]  # 預測
-                one_rel = rel_dict[qid]        # 真實
-                one_answer = [int(pid) for pid in one_answer]
-                one_rel = [int(pid) for pid in one_rel]
-                list_answer_ohe.append(one_answer)
-                list_label_ohe.append(one_rel)
+            one_answer = answer_dict.get(qid, [])  # 預測
+            if not one_answer:
+                missing_pred_qids += 1
+            one_rel = rel_dict[qid]        # 真實
+            one_answer = [int(pid) for pid in one_answer]
+            one_rel = [int(pid) for pid in one_rel]
+            list_answer_ohe.append(one_answer)
+            list_label_ohe.append(one_rel)
         
         # 計算評估指標
         f1, precision, recall = my_classification_report(list_label_ohe, list_answer_ohe)
@@ -152,10 +155,13 @@ def evaluate_model_retrieval(model, tokenizer, device, candidate_dataset_path, q
             'f1': f1,
             'precision': precision,
             'recall': recall,
-            'num_queries': len(list_answer_ohe)
+            'num_queries': len(list_answer_ohe),
+            'missing_pred_qids': missing_pred_qids,
         }
         
         print(f"✅ {split} set 結果: F1={f1:.4f}, Precision={precision:.4f}, Recall={recall:.4f}")
+        if missing_pred_qids:
+            print(f"⚠️ {split} set 有 {missing_pred_qids} 個 query 無預測，已以空答案計分")
     
     return results
 

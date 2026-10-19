@@ -97,21 +97,36 @@ def build_scope(
     *,
     year_slack: int,
     unknown_query_year_policy: str,
+    unknown_candidate_year_policy: str,
     exclude_self: bool,
 ) -> Dict[str, List[str]]:
     scope: Dict[str, List[str]] = {}
     candidate_year_values = [candidate_years[candidate_id] for candidate_id in ordered_candidate_ids]
+    candidate_year_pairs = list(zip(ordered_candidate_ids, candidate_year_values))
 
     for qid, qyear in query_years.items():
         if qyear == 0:
-            allowed = list(ordered_candidate_ids) if unknown_query_year_policy == "all" else []
+            if unknown_query_year_policy == "all":
+                allowed = [
+                    candidate_id
+                    for candidate_id, candidate_year in candidate_year_pairs
+                    if candidate_year != 0 or unknown_candidate_year_policy == "include"
+                ]
+            else:
+                allowed = []
         else:
             year_threshold = qyear + max(0, year_slack)
             allowed = [
                 candidate_id
-                for candidate_id, candidate_year in zip(ordered_candidate_ids, candidate_year_values)
-                if candidate_year <= year_threshold
+                for candidate_id, candidate_year in candidate_year_pairs
+                if candidate_year != 0 and candidate_year <= year_threshold
             ]
+            if unknown_candidate_year_policy == "include":
+                allowed.extend(
+                    candidate_id
+                    for candidate_id, candidate_year in candidate_year_pairs
+                    if candidate_year == 0
+                )
         if exclude_self:
             allowed = [candidate_id for candidate_id in allowed if candidate_id != qid]
         scope[qid] = allowed
@@ -192,6 +207,15 @@ def parse_args() -> argparse.Namespace:
         help="When query year is not found: keep all candidates or keep none.",
     )
     parser.add_argument(
+        "--unknown-candidate-year-policy",
+        choices=["include", "exclude"],
+        default="include",
+        help=(
+            "When candidate year is not found: include it as a candidate or exclude it. "
+            "Use `exclude` for conservative no-future-leak filtering."
+        ),
+    )
+    parser.add_argument(
         "--exclude-self",
         action="store_true",
         help="Exclude candidate with the same id as query id.",
@@ -244,6 +268,8 @@ def _execute(args: argparse.Namespace) -> None:
     print(f"Candidate year source: {candidate_year_source_dir}")
     print(f"Query year source: {query_year_source_dir}")
     print(f"Year slack: {args.year_slack}")
+    print(f"Unknown query year policy: {args.unknown_query_year_policy}")
+    print(f"Unknown candidate year policy: {args.unknown_candidate_year_policy}")
     if missing_candidate_ids:
         print(f"Missing candidate IDs from list: {len(missing_candidate_ids)} (example: {missing_candidate_ids[:5]})")
     if missing_query_ids:
@@ -288,6 +314,7 @@ def _execute(args: argparse.Namespace) -> None:
         candidate_years,
         year_slack=args.year_slack,
         unknown_query_year_policy=args.unknown_query_year_policy,
+        unknown_candidate_year_policy=args.unknown_candidate_year_policy,
         exclude_self=args.exclude_self,
     )
 
@@ -321,7 +348,7 @@ def _build_default_args_from_repo_root() -> argparse.Namespace:
     candidate_dir = task1_root / "processed"
     query_dir = task1_root / "processed"
     year_source_dir = task1_root / f"task1_train_files_{task1_year}"
-    output_path = task1_root / "lht_process" / "modernBert" / "query_candidate_scope.json"
+    output_path = task1_root / "lht_process" / "scope_compare" / "query_candidate_scope_raw_plus0.json"
     train_qids_path = task1_root / "train_qid.tsv"
     valid_qids_path = task1_root / "valid_qid.tsv"
 
@@ -354,8 +381,9 @@ def _build_default_args_from_repo_root() -> argparse.Namespace:
         candidate_year_source_dir=year_source_dir,
         query_year_source_dir=year_source_dir,
         year_pattern=DEFAULT_YEAR_PATTERN,
-        year_slack=1,
-        unknown_query_year_policy="all",
+        year_slack=0,
+        unknown_query_year_policy="empty",
+        unknown_candidate_year_policy="exclude",
         exclude_self=False,
         indent=2,
     )

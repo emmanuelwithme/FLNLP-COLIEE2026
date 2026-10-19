@@ -3,7 +3,9 @@ from __future__ import annotations
 import json
 import random
 from pathlib import Path
-from typing import Dict, Iterable, List, Sequence
+from typing import Dict, Iterable, List, Mapping, Sequence
+
+from .data import load_query_candidate_scope, normalize_query_candidate_scope
 
 
 def classification_report(
@@ -87,28 +89,109 @@ def rel_file_to_dict(rel_path: str | Path, query_id_path: str | Path) -> Dict[in
     return rel_dict
 
 
-def random_guess_baseline(rel_dict: Dict[int, List[int]], topk: int = 5, seed: int = 42) -> tuple[float, float, float]:
+def random_guess_predictions(
+    rel_dict: Dict[int, List[int]],
+    *,
+    topk: int = 5,
+    seed: int = 42,
+    query_candidate_scope: Mapping[object, Sequence[object]] | None = None,
+    query_candidate_scope_path: str | Path | None = None,
+    zero_pad_width: int = 6,
+) -> tuple[List[List[int]], Dict[str, int]]:
+    """
+    Generate deterministic random-guess predictions for each query.
+
+    When ``query_candidate_scope`` or ``query_candidate_scope_path`` is
+    provided, sampling is restricted to that query's allowed candidates.  This
+    is useful for scope-filtered baselines such as year-filtered judgment
+    pools.
+    """
+    rng = random.Random(seed)
+    resolved_scope: dict[str, List[str]] | None = None
+    if query_candidate_scope is not None:
+        resolved_scope = normalize_query_candidate_scope(query_candidate_scope)
+    elif query_candidate_scope_path is not None:
+        resolved_scope = load_query_candidate_scope(query_candidate_scope_path)
+
+    predicted_sets: List[List[int]] = []
+    stats = {
+        "missing_scope_queries": 0,
+        "empty_candidate_pool_queries": 0,
+    }
+
+    if resolved_scope is None:
+        all_doc_ids = sorted({pid for pids in rel_dict.values() for pid in pids})
+        if not all_doc_ids:
+            return predicted_sets, stats
+
+        for qid in rel_dict.keys():
+            pool = [pid for pid in all_doc_ids if pid != qid]
+            if len(pool) <= topk:
+                predicted_sets.append(pool)
+            else:
+                predicted_sets.append(rng.sample(pool, topk))
+        return predicted_sets, stats
+
+    for qid in rel_dict.keys():
+        raw_key = str(qid)
+        padded_key = raw_key.zfill(zero_pad_width) if zero_pad_width > 0 and raw_key.isdigit() else raw_key
+        raw_candidates = resolved_scope.get(padded_key)
+        scope_missing = False
+        if raw_candidates is None:
+            raw_candidates = resolved_scope.get(raw_key)
+        if raw_candidates is None:
+            scope_missing = True
+            stats["missing_scope_queries"] += 1
+            raw_candidates = []
+
+        pool: List[int] = []
+        seen: set[int] = set()
+        for raw_doc_id in raw_candidates:
+            docid = str(raw_doc_id).replace(".txt", "").strip()
+            if not docid.isdigit():
+                continue
+            pid = int(docid)
+            if pid == qid or pid in seen:
+                continue
+            seen.add(pid)
+            pool.append(pid)
+
+        if not pool and not scope_missing:
+            stats["empty_candidate_pool_queries"] += 1
+        if len(pool) <= topk:
+            predicted_sets.append(pool)
+        else:
+            predicted_sets.append(rng.sample(pool, topk))
+
+    return predicted_sets, stats
+
+
+def random_guess_baseline(
+    rel_dict: Dict[int, List[int]],
+    topk: int = 5,
+    seed: int = 42,
+    query_candidate_scope: Mapping[object, Sequence[object]] | None = None,
+    query_candidate_scope_path: str | Path | None = None,
+    zero_pad_width: int = 6,
+) -> tuple[float, float, float]:
     """
     Sample ``topk`` documents at random (excluding the query id) and compute
     the resulting metrics.  Useful as a sanity-check baseline.
+
+    If query-specific candidate scope is supplied, random sampling is limited
+    to that scope instead of the global pool.
     """
-    random.seed(seed)
-
-    # pool of candidate doc ids
-    all_doc_ids = sorted({pid for pids in rel_dict.values() for pid in pids})
-    if not all_doc_ids:
-        return 0.0, 0.0, 0.0
-
-    predicted_sets: List[List[int]] = []
     label_sets: List[List[int]] = []
+    predicted_sets, _stats = random_guess_predictions(
+        rel_dict,
+        topk=topk,
+        seed=seed,
+        query_candidate_scope=query_candidate_scope,
+        query_candidate_scope_path=query_candidate_scope_path,
+        zero_pad_width=zero_pad_width,
+    )
 
-    for qid, labels in rel_dict.items():
-        pool = [pid for pid in all_doc_ids if pid != qid]
-        if len(pool) < topk:
-            sample = pool
-        else:
-            sample = random.sample(pool, topk)
-        predicted_sets.append(sample)
+    for labels in rel_dict.values():
         label_sets.append([int(pid) for pid in labels])
 
     return classification_report(label_sets, predicted_sets)

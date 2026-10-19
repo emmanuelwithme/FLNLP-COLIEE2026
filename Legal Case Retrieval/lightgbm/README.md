@@ -31,8 +31,15 @@
 ```bash
 bash run_pre_finetune.sh
 python "Legal Case Retrieval/modernBert-fp/fine_tune/fine_tune.py"
-bash run_test_retrieval.sh
+python "Legal Case Retrieval/modernBert-fp/inference.py"
+python "Legal Case Retrieval/modernBert-fp/similarity_and_rank.py"
+python "Legal Case Retrieval/pre-process/process_test_files.py" --help
+python "Legal Case Retrieval/pre-process/prepare_test_pipeline_inputs.py" --help
+LCR_TEST_MODE=1 python "Legal Case Retrieval/modernBert-fp/inference.py"
+LCR_TEST_MODE=1 python "Legal Case Retrieval/modernBert-fp/similarity_and_rank.py"
 ```
+
+test scope、BM25 test index 與 submission 需分別透過 `build_query_candidate_scope.py`、`lexical models/linux/` 下的 test scripts，以及 `utils/trec_to_submission.py` 建立。舊的 `run_test_retrieval.sh` wrapper 已移除。
 
 ## 步驟 1: 建 feature、訓練與 fixed top-k
 

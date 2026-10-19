@@ -15,16 +15,19 @@ FLNLP codebase centered on COLIEE Task 1.
 
 - Task 1 preprocessing: `bash run_pre_finetune.sh`
 - Task 1 dense training: `python "Legal Case Retrieval/modernBert-fp/fine_tune/fine_tune.py"`
-- Task 1 train/valid retrieval check: `bash run_train_valid_inference_eval.sh`
-- Task 1 test retrieval export: `bash run_test_retrieval.sh`
+- Task 1 dense embeddings: `python "Legal Case Retrieval/modernBert-fp/inference.py"`
+- Task 1 train/valid ranking: `python "Legal Case Retrieval/modernBert-fp/similarity_and_rank.py"`
+- Task 1 evaluation: `python "Legal Case Retrieval/utils/eval.py"`
 - Task 1 LTR feature and fixed top-k export: `bash run_ltr_feature_train_valid_test.sh`
 - Task 1 LTR cutoff search and final submission export: `bash run_ltr_cutoff_postprocess.sh`
-- Task 2 supplementary workflow: `bash run_task2_finetune.sh`
+- Task 2 supplementary workflow: run the preparation, statistics, and training Python entry points documented below.
 
 ## Documentation
 
 - Environment: [中文](ENVIRONMENT.md) | [English](ENVIRONMENT.en.md)
 - Task 1 overview: [中文](Legal%20Case%20Retrieval/README.md) | [English](Legal%20Case%20Retrieval/README.en.md)
 - Task 1 dense retrieval: [中文](Legal%20Case%20Retrieval/modernBert-fp/README.md) | [English](Legal%20Case%20Retrieval/modernBert-fp/README.en.md)
+- Task 1 ChunkAgg v5: [中文](Legal%20Case%20Retrieval/modernBert-fp-chunkAgg/README.md) | [English](Legal%20Case%20Retrieval/modernBert-fp-chunkAgg/README.en.md)
+- Task 1 ChunkAgg v6: [中文](Legal%20Case%20Retrieval/modernBert-fp-chunkAgg-v6/README.md) | [English](Legal%20Case%20Retrieval/modernBert-fp-chunkAgg-v6/README.en.md)
 - Task 1 LightGBM rerank: [中文](Legal%20Case%20Retrieval/lightgbm/README.md) | [English](Legal%20Case%20Retrieval/lightgbm/README.en.md)
 - Task 2 paragraph workflow: [中文](Legal%20Case%20Entailment%20by%20Mou/README.md) | [English](Legal%20Case%20Entailment%20by%20Mou/README.en.md)

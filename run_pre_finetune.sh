@@ -54,6 +54,9 @@ TASK1_BM25_QUERY_TRAIN_PATH="${TASK1_BM25_DIR}/query_train.tsv"
 TASK1_BM25_QUERY_VALID_PATH="${TASK1_BM25_DIR}/query_valid.tsv"
 TASK1_BM25_OUTPUT_TRAIN_PATH="${TASK1_BM25_DIR}/output_bm25_train.tsv"
 TASK1_BM25_OUTPUT_VALID_PATH="${TASK1_BM25_DIR}/output_bm25_valid.tsv"
+TASK1_BM25_OUTPUT_TRAIN_SCOPED_PATH="${TASK1_BM25_DIR}/output_bm25_train_scope_filtered.tsv"
+TASK1_BM25_OUTPUT_VALID_SCOPED_PATH="${TASK1_BM25_DIR}/output_bm25_valid_scope_filtered.tsv"
+TASK1_SCOPE_QUERY_IDS_PATH="${TASK1_BM25_DIR}/scope_train_valid_qids.tsv"
 
 run_step() {
   local title="$1"
@@ -112,6 +115,32 @@ require_file "${TASK1_TRAIN_QID_PATH}"
 require_nonempty_file "${TASK1_BM25_QUERY_TRAIN_PATH}"
 require_nonempty_file "${TASK1_BM25_QUERY_VALID_PATH}"
 
+{
+  sed 's/[[:space:]].*$//' "${TASK1_TRAIN_QID_PATH}"
+  sed 's/[[:space:]].*$//' "${TASK1_VALID_QID_PATH}"
+} | awk 'NF && !seen[$1]++ { print $1 }' > "${TASK1_SCOPE_QUERY_IDS_PATH}"
+require_nonempty_file "${TASK1_SCOPE_QUERY_IDS_PATH}"
+
+SCOPE_ARGS=(
+  --candidate-dir "${TASK1_PROCESSED_DIR}"
+  --query-dir "${TASK1_PROCESSED_DIR}"
+  --output-path "${TASK1_SCOPE_PATH}"
+  --query-ids-path "${TASK1_SCOPE_QUERY_IDS_PATH}"
+  --candidate-year-source-dir "${TASK1_TRAIN_RAW_DIR}"
+  --query-year-source-dir "${TASK1_TRAIN_RAW_DIR}"
+  --year-slack "${TASK1_SCOPE_YEAR_SLACK}"
+  --unknown-query-year-policy "${TASK1_SCOPE_UNKNOWN_QUERY_YEAR_POLICY}"
+  --unknown-candidate-year-policy "${TASK1_SCOPE_UNKNOWN_CANDIDATE_YEAR_POLICY:-include}"
+)
+if is_truthy "${TASK1_SCOPE_EXCLUDE_SELF}"; then
+  SCOPE_ARGS+=(--exclude-self)
+fi
+
+run_step "Build raw-date query candidate scope JSON for year filter" \
+  python "Legal Case Retrieval/pre-process/build_query_candidate_scope.py" \
+    "${SCOPE_ARGS[@]}"
+require_file "${TASK1_SCOPE_PATH}"
+
 run_step "Generate BM25 corpus jsonl" \
   python "Legal Case Retrieval/lexical models/form_corpus.py" \
     --raw-dir "${TASK1_PROCESSED_DIR}" \
@@ -127,10 +156,30 @@ run_step "Run BM25 search for train/valid queries" \
 require_nonempty_file "${TASK1_BM25_OUTPUT_TRAIN_PATH}"
 require_nonempty_file "${TASK1_BM25_OUTPUT_VALID_PATH}"
 
+run_step "Apply raw-date scope filter to BM25 valid hard-negative pool" \
+  python "Legal Case Retrieval/utils/filter_trec_by_scope.py" \
+    --input-path "${TASK1_BM25_OUTPUT_VALID_PATH}" \
+    --output-path "${TASK1_BM25_OUTPUT_VALID_SCOPED_PATH}" \
+    --scope-path "${TASK1_SCOPE_PATH}" \
+    --qid-path "${TASK1_VALID_QID_PATH}" \
+    --skip-self \
+    --strict-scope
+require_nonempty_file "${TASK1_BM25_OUTPUT_VALID_SCOPED_PATH}"
+
+run_step "Apply raw-date scope filter to BM25 train hard-negative pool" \
+  python "Legal Case Retrieval/utils/filter_trec_by_scope.py" \
+    --input-path "${TASK1_BM25_OUTPUT_TRAIN_PATH}" \
+    --output-path "${TASK1_BM25_OUTPUT_TRAIN_SCOPED_PATH}" \
+    --scope-path "${TASK1_SCOPE_PATH}" \
+    --qid-path "${TASK1_TRAIN_QID_PATH}" \
+    --skip-self \
+    --strict-scope
+require_nonempty_file "${TASK1_BM25_OUTPUT_TRAIN_SCOPED_PATH}"
+
 run_step "Create contrastive BM25 hard-negative JSON (top100 random15)" \
   python "Legal Case Retrieval/modernBert/fine_tune/create_bm25_hard_negative_data_top100_random15.py" \
-    --bm25-train-path "${TASK1_BM25_OUTPUT_TRAIN_PATH}" \
-    --bm25-valid-path "${TASK1_BM25_OUTPUT_VALID_PATH}" \
+    --bm25-train-path "${TASK1_BM25_OUTPUT_TRAIN_SCOPED_PATH}" \
+    --bm25-valid-path "${TASK1_BM25_OUTPUT_VALID_SCOPED_PATH}" \
     --train-labels-path "${TASK1_TRAIN_SPLIT_LABELS_PATH}" \
     --valid-labels-path "${TASK1_VALID_SPLIT_LABELS_PATH}" \
     --train-output-path "${TASK1_FINETUNE_DATA_DIR}/contrastive_bm25_hard_negative_top100_random15_train.json" \
@@ -140,22 +189,6 @@ run_step "Create contrastive BM25 hard-negative JSON (top100 random15)" \
     --random-seed "${TASK1_HARD_NEG_SEED}"
 require_file "${TASK1_FINETUNE_DATA_DIR}/contrastive_bm25_hard_negative_top100_random15_train.json"
 require_file "${TASK1_FINETUNE_DATA_DIR}/contrastive_bm25_hard_negative_top100_random15_valid.json"
-
-SCOPE_ARGS=(
-  --candidate-dir "${TASK1_TRAIN_RAW_DIR}"
-  --query-dir "${TASK1_TRAIN_RAW_DIR}"
-  --output-path "${TASK1_SCOPE_PATH}"
-  --year-slack "${TASK1_SCOPE_YEAR_SLACK}"
-  --unknown-query-year-policy "${TASK1_SCOPE_UNKNOWN_QUERY_YEAR_POLICY}"
-)
-if is_truthy "${TASK1_SCOPE_EXCLUDE_SELF}"; then
-  SCOPE_ARGS+=(--exclude-self)
-fi
-
-run_step "Build query candidate scope JSON for year filter" \
-  python "Legal Case Retrieval/pre-process/build_query_candidate_scope.py" \
-    "${SCOPE_ARGS[@]}"
-require_file "${TASK1_SCOPE_PATH}"
 
 echo
 echo "[DONE] Fine-tune 前置流程完成。"

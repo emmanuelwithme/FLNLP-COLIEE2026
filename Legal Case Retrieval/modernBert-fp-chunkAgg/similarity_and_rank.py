@@ -13,7 +13,7 @@ from env_utils import load_chunkagg_dotenv
 
 _LOADED_DOTENV_PATH = load_chunkagg_dotenv(__file__)
 
-from lcr.task1_paths import get_task1_dir, get_task1_year
+from lcr.task1_paths import get_env_path, get_task1_dir, get_task1_year
 
 TASK1_DIR = get_task1_dir()
 TASK1_YEAR = get_task1_year()
@@ -27,7 +27,7 @@ from lcr.embedding_selection import (
 from lcr.similarity import compute_similarity_and_save
 
 # 中文註解：TASK1_CHUNKAGG_MODEL_NAME 需與 inference.py 產出的 embeddings 檔名一致。
-MODEL_NAME = os.getenv("TASK1_CHUNKAGG_MODEL_NAME", "modernBert_fp_chunkAgg_fp16")
+MODEL_NAME = os.getenv("TASK1_CHUNKAGG_MODEL_NAME", "modernBert_fp_chunkAgg_v5_fp16")
 
 if __name__ == "__main__":
     _device = get_device()
@@ -61,24 +61,17 @@ if __name__ == "__main__":
         f"{TASK1_DIR}/lht_process/{MODEL_NAME}/output_{MODEL_NAME}_cos_train.tsv",
     )
 
-    # 中文註解：TASK1_CHUNKAGG_SCOPE_PATH 可直接指定 query candidate scope JSON。
-    model_scope_path = Path(
-        os.getenv(
-            "TASK1_CHUNKAGG_SCOPE_PATH",
-            f"{TASK1_DIR}/lht_process/{MODEL_NAME}/query_candidate_scope.json",
-        )
+    # 中文註解：ranking 必須和 training/eval 使用同一份 emptyExclude scope，避免評估不可比。
+    query_candidate_scope_path = get_env_path(
+        "TASK1_CHUNKAGG_SCOPE_PATH",
+        default=f"{TASK1_DIR}/lht_process/scope_compare/query_candidate_scope_raw_plus0_empty_exclude.json",
+        required=True,
     )
-    shared_scope_path = Path(f"{TASK1_DIR}/lht_process/modernBert/query_candidate_scope.json")
-    if model_scope_path.exists():
-        query_candidate_scope_path = model_scope_path
-        print(f"🔹 使用 query candidate scope: {query_candidate_scope_path}")
-    elif shared_scope_path.exists():
-        query_candidate_scope_path = shared_scope_path
-        print(f"🔹 未找到 {model_scope_path}，改用共用 scope: {query_candidate_scope_path}")
-    else:
-        print(f"⚠️ 未找到 {model_scope_path}，也未找到 {shared_scope_path}。")
-        print("⚠️ 將對全部 candidates 計分。")
-        query_candidate_scope_path = None
+    assert query_candidate_scope_path is not None
+    if not query_candidate_scope_path.exists():
+        raise FileNotFoundError(f"找不到 TASK1_CHUNKAGG_SCOPE_PATH: {query_candidate_scope_path}")
+    os.environ["LCR_QUERY_CANDIDATE_SCOPE_JSON"] = str(query_candidate_scope_path)
+    print(f"🔹 使用 query candidate scope: {query_candidate_scope_path}")
 
     query_selection = select_task1_embedding_path(
         role="query",
@@ -123,6 +116,7 @@ if __name__ == "__main__":
                 metric=metric,
                 run_tag=f"{MODEL_NAME}_{metric}",
                 query_candidate_scope_path=query_candidate_scope_path,
+                exclude_self=True,
             )
             if missing:
                 print(f"⚠️ {split_name} split 缺少 {len(missing)} 個查詢向量：{missing}")

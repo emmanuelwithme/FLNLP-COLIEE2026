@@ -57,7 +57,7 @@ from lcr.task1_paths import (
 TASK1_DIR = get_task1_dir()
 TASK1_YEAR = get_task1_year()
 
-from lcr.data import EmbeddingsData
+from lcr.data import EmbeddingsData, load_query_candidate_scope
 import torch.nn.functional as F
 from collections import defaultdict
 import time
@@ -84,6 +84,14 @@ RETRIEVAL_BATCH_SIZE = max(1, get_env_int("TASK1_RETRIEVAL_BATCH_SIZE", required
 INIT_TEMPERATURE = get_env_float("TASK1_INIT_TEMPERATURE", required=True)
 if INIT_TEMPERATURE <= 0:
     raise ValueError(f"TASK1_INIT_TEMPERATURE must be > 0, got: {INIT_TEMPERATURE}")
+NEGATIVE_SAMPLING_METHOD = (get_env("TASK1_NEGATIVE_SAMPLING_METHOD", default="adaptive") or "adaptive").strip().lower()
+if NEGATIVE_SAMPLING_METHOD not in {"adaptive", "random"}:
+    raise ValueError(
+        "TASK1_NEGATIVE_SAMPLING_METHOD must be either 'adaptive' or 'random', "
+        f"got: {NEGATIVE_SAMPLING_METHOD}"
+    )
+MAX_NEGATIVES = max(1, get_env_int("TASK1_HARD_NEG_MAX_NEGATIVES", 15))
+RANDOM_NEGATIVE_SEED = get_env_int("TASK1_RANDOM_NEGATIVE_SEED", get_env_int("TASK1_HARD_NEG_SEED", 289))
 
 # 由 main() 設定，用於 generate_similarity_artifacts 的覆寫資料
 _QT_CANDIDATE_FILES = None   # List[str] 檔名（包含 .txt）
@@ -153,18 +161,21 @@ def evaluate_model_retrieval(model, tokenizer, device, candidate_dataset_path, q
         trec_path = str(artifacts.trec_path)
         answer_dict = trec_file_convert(trec_path, topk)
         
-        # 準備評估資料
+        # 準備評估資料。所有 labeled query 都要進分母；若 scope 為空或
+        # ranking 沒有該 query，視為空答案，而不是把該 query 略過。
         list_answer_ohe = []  # 預測答案
         list_label_ohe = []   # 真實答案
+        missing_pred_qids = 0
         
         for qid in rel_dict.keys():
-            if qid in answer_dict:
-                one_answer = answer_dict[qid]  # 預測
-                one_rel = rel_dict[qid]        # 真實
-                one_answer = [int(pid) for pid in one_answer]
-                one_rel = [int(pid) for pid in one_rel]
-                list_answer_ohe.append(one_answer)
-                list_label_ohe.append(one_rel)
+            one_answer = answer_dict.get(qid, [])  # 預測
+            if not one_answer:
+                missing_pred_qids += 1
+            one_rel = rel_dict[qid]        # 真實
+            one_answer = [int(pid) for pid in one_answer]
+            one_rel = [int(pid) for pid in one_rel]
+            list_answer_ohe.append(one_answer)
+            list_label_ohe.append(one_rel)
         
         # 計算評估指標
         f1, precision, recall = my_classification_report(list_label_ohe, list_answer_ohe)
@@ -173,14 +184,21 @@ def evaluate_model_retrieval(model, tokenizer, device, candidate_dataset_path, q
             'f1': f1,
             'precision': precision,
             'recall': recall,
-            'num_queries': len(list_answer_ohe)
+            'num_queries': len(list_answer_ohe),
+            'missing_pred_qids': missing_pred_qids,
         }
         
         print(f"✅ {split} set 結果: F1={f1:.4f}, Precision={precision:.4f}, Recall={recall:.4f}")
+        if missing_pred_qids:
+            print(f"⚠️ {split} set 有 {missing_pred_qids} 個 query 無預測，已以空答案計分")
     
     return results
 
 
+
+
+def normalize_case_id(raw_id: object) -> str:
+    return str(raw_id).strip().removesuffix(".txt")
 
 
 def read_positive_pairs_from_json(json_path: str) -> Dict[str, Set[str]]:
@@ -189,14 +207,14 @@ def read_positive_pairs_from_json(json_path: str) -> Dict[str, Set[str]]:
     with open(json_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
     for q_txt, pos_list in data.items():
-        qid = q_txt.replace(".txt", "")
+        qid = normalize_case_id(q_txt)
         for doc_txt in pos_list:
-            doc_id = doc_txt.replace(".txt", "")
+            doc_id = normalize_case_id(doc_txt)
             positives[qid].add(doc_id)
     return positives
 
 
-def generate_adaptive_negative_samples(query_id_to_similarities, positives, max_negatives=15, temperature=1.0):
+def generate_adaptive_negative_samples(query_id_to_similarities, positives, max_negatives=MAX_NEGATIVES, temperature=1.0):
     """
     根據相似度分數作為機率來選擇負樣本
     """
@@ -240,6 +258,76 @@ def generate_adaptive_negative_samples(query_id_to_similarities, positives, max_
                 })
     
     return dataset
+
+
+def generate_random_negative_samples(
+    positives: Dict[str, Set[str]],
+    candidate_ids: List[str],
+    max_negatives: int = MAX_NEGATIVES,
+    seed: int = RANDOM_NEGATIVE_SEED,
+    epoch_index: int = 0,
+    query_candidate_scope: Optional[Dict[str, List[str]]] = None,
+    train_qids: Optional[List[str]] = None,
+) -> tuple[List[Dict[str, object]], Dict[str, int]]:
+    """從候選文件池隨機抽負樣本；每個 epoch 用 seed+epoch_index 取得可重現但不同的抽樣。"""
+    rng = random.Random(seed + int(epoch_index))
+    ordered_candidate_ids = list(dict.fromkeys(normalize_case_id(cid) for cid in candidate_ids if normalize_case_id(cid)))
+    candidate_id_set = set(ordered_candidate_ids)
+
+    if train_qids is None:
+        qids = sorted(positives.keys())
+    else:
+        qids = [
+            normalize_case_id(qid)
+            for qid in train_qids
+            if normalize_case_id(qid) in positives
+        ]
+
+    dataset: List[Dict[str, object]] = []
+    stats = {
+        "queries": len(qids),
+        "missing_scope_queries": 0,
+        "empty_candidate_pool_queries": 0,
+        "pairs_with_replacement": 0,
+        "skipped_positive_pairs": 0,
+    }
+
+    for qid in qids:
+        pos_set = {normalize_case_id(pos_id) for pos_id in positives[qid]}
+        if query_candidate_scope is None:
+            pool = ordered_candidate_ids
+        else:
+            scoped_pool = query_candidate_scope.get(qid)
+            if not scoped_pool:
+                stats["missing_scope_queries"] += 1
+                stats["skipped_positive_pairs"] += len(pos_set)
+                continue
+            pool = [normalize_case_id(cid) for cid in scoped_pool if normalize_case_id(cid) in candidate_id_set]
+
+        negative_candidates = [
+            cid
+            for cid in pool
+            if cid and cid not in pos_set and cid != qid
+        ]
+        if not negative_candidates:
+            stats["empty_candidate_pool_queries"] += 1
+            stats["skipped_positive_pairs"] += len(pos_set)
+            continue
+
+        replace = len(negative_candidates) < max_negatives
+        for pos_id in sorted(pos_set):
+            if replace:
+                neg_sample = [rng.choice(negative_candidates) for _ in range(max_negatives)]
+                stats["pairs_with_replacement"] += 1
+            else:
+                neg_sample = rng.sample(negative_candidates, max_negatives)
+            dataset.append({
+                "query_id": qid,
+                "positive_id": pos_id,
+                "negative_ids": neg_sample,
+            })
+
+    return dataset, stats
 
 # 自訂 Callback，把紀錄寫到 TensorBoard
 class TensorBoardExtras(TrainerCallback):
@@ -588,6 +676,10 @@ class AdaptiveNegativeSamplingTrainer(Trainer):
                  sampling_temperature: float = 1.0,
                  update_frequency: int = 1,  # 新增：多少epoch更新一次負樣本
                  retrieval_batch_size: int = RETRIEVAL_BATCH_SIZE,
+                 negative_sampling_method: str = NEGATIVE_SAMPLING_METHOD,
+                 max_negatives: int = MAX_NEGATIVES,
+                 random_negative_seed: int = RANDOM_NEGATIVE_SEED,
+                 query_candidate_scope_path: str = None,
                  **kwargs):
         super().__init__(*args, **kwargs)
         self.candidate_dataset_path = candidate_dataset_path
@@ -598,6 +690,14 @@ class AdaptiveNegativeSamplingTrainer(Trainer):
         self.sampling_temperature = sampling_temperature
         self.update_frequency = update_frequency
         self.retrieval_batch_size = max(1, retrieval_batch_size)
+        self.negative_sampling_method = (negative_sampling_method or "adaptive").strip().lower()
+        if self.negative_sampling_method not in {"adaptive", "random"}:
+            raise ValueError(f"Unsupported negative sampling method: {self.negative_sampling_method}")
+        self.max_negatives = max(1, max_negatives)
+        self.random_negative_seed = random_negative_seed
+        self.query_candidate_scope_path = query_candidate_scope_path
+        self.query_candidate_scope = None
+        self.candidate_ids: List[str] = []
         self.current_epoch = 0
         self._prepared_epoch_index = None  # resume 時若已預先準備該 epoch 的負樣本，callback 需略過一次
         
@@ -615,15 +715,46 @@ class AdaptiveNegativeSamplingTrainer(Trainer):
                         self.train_qids = random.sample(self.train_qids, kq)
         if positive_train_json_path:
             self.positives = read_positive_pairs_from_json(positive_train_json_path)
+
+        if self.negative_sampling_method == "random":
+            self.candidate_ids = self.load_candidate_ids(candidate_dataset_path)
+            if QUICK_TEST and _QT_CANDIDATE_FILES:
+                self.candidate_ids = sorted({normalize_case_id(fn) for fn in _QT_CANDIDATE_FILES})
+            if SCOPE_FILTER and query_candidate_scope_path and os.path.exists(query_candidate_scope_path):
+                self.query_candidate_scope = load_query_candidate_scope(query_candidate_scope_path)
             
-        print(f"🔹 適應性負樣本採樣設定：")
+        print(f"🔹 負樣本採樣設定 ({self.negative_sampling_method})：")
         print(f"   - 負樣本更新頻率：每 {self.update_frequency} 個epoch")
-        print(f"   - 採樣溫度：{self.sampling_temperature}")
-        print(f"   - Candidate embedding batch size：{self.retrieval_batch_size}")
+        if self.negative_sampling_method == "adaptive":
+            print(f"   - 採樣溫度：{self.sampling_temperature}")
+            print(f"   - Candidate embedding batch size：{self.retrieval_batch_size}")
+        else:
+            print(f"   - 隨機種子：{self.random_negative_seed}")
+            print(f"   - 每筆正樣本負樣本數：{self.max_negatives}")
+            print(f"   - 隨機候選文件數：{len(self.candidate_ids)}")
+            if self.query_candidate_scope is not None:
+                print(f"   - 使用 scope 過濾：{self.query_candidate_scope_path}")
+            elif SCOPE_FILTER:
+                print("   - 未載入 scope，將不做 query-level candidate 過濾")
         if hasattr(self, 'train_qids'):
             print(f"   - 訓練查詢數量：{len(self.train_qids)}")
         if hasattr(self, 'positives'):
             print(f"   - 正樣本對數量：{len(self.positives)}")
+
+    @staticmethod
+    def load_candidate_ids(candidate_dataset_path: str) -> List[str]:
+        if not candidate_dataset_path:
+            raise ValueError("random negative sampling requires candidate_dataset_path")
+        candidate_dir = Path(candidate_dataset_path)
+        if not candidate_dir.exists():
+            raise FileNotFoundError(f"candidate dataset path does not exist: {candidate_dir}")
+        ids = sorted(p.stem for p in candidate_dir.glob("*.txt") if p.is_file())
+        if not ids:
+            raise ValueError(f"no candidate .txt files found under: {candidate_dir}")
+        return ids
+
+    def negative_data_prefix(self) -> str:
+        return "random_negative" if self.negative_sampling_method == "random" else "adaptive_negative"
     
     def create_optimizer(self):
         if self.optimizer is not None:
@@ -686,33 +817,33 @@ class AdaptiveNegativeSamplingTrainer(Trainer):
                     next_epoch_index = completed_epoch
                     self.current_epoch = next_epoch_index
                     print(
-                        f"🔹 依 checkpoint 對齊動態負樣本："
+                        f"🔹 依 checkpoint 對齊負樣本："
                         f"已完成 epoch={completed_epoch}，將準備下一輪(第{next_epoch_index + 1}輪)資料"
                     )
                     restored = self.load_adaptive_data_for_epoch(next_epoch_index)
                     if not restored:
                         print(
-                            f"🔹 找不到 adaptive_negative_epoch{next_epoch_index}_train.json，"
-                            "將即時計算該輪動態負樣本"
+                            f"🔹 找不到 {self.negative_data_prefix()}_epoch{next_epoch_index}_train.json，"
+                            "將即時計算該輪負樣本"
                         )
                         self.update_negative_samples()
                         restored = len(self.train_dataset) > 0
                     if restored:
                         self._prepared_epoch_index = next_epoch_index
                 else:
-                    print("⚠️ 無法從 checkpoint 解析 epoch，改用最新 adaptive negatives 檔案")
+                    print("⚠️ 無法從 checkpoint 解析 epoch，改用最新 negatives 檔案")
                     restored = self.load_latest_adaptive_data()
             if not restored:
-                print("🔹 找不到可用的 adaptive negatives，改為即時計算一次")
+                print("🔹 找不到可用的 negatives，改為即時計算一次")
                 self.update_negative_samples()
         elif self.current_epoch == 0 and not resume_from_checkpoint:
-            print("🔹 第0個epoch開始使用適應性負樣本...")
+            print(f"🔹 第0個epoch開始使用 {self.negative_sampling_method} 負樣本...")
             self.update_negative_samples()
         
         return super()._inner_training_loop(batch_size, args, resume_from_checkpoint, trial, ignore_keys_for_eval)
 
     def load_latest_adaptive_data(self) -> bool:
-        """從 finetune_data_dir 載入最新 adaptive_negative_epoch*_train.json。"""
+        """從 finetune_data_dir 載入最新 negative data json。"""
         if not self.finetune_data_dir:
             return False
         if not hasattr(self.train_dataset, "update_data"):
@@ -723,9 +854,10 @@ class AdaptiveNegativeSamplingTrainer(Trainer):
             return False
 
         candidates = []
-        for path in data_dir.glob("adaptive_negative_epoch*_train.json"):
-            stem = path.stem  # adaptive_negative_epoch{N}_train
-            epoch_str = stem.removeprefix("adaptive_negative_epoch").removesuffix("_train")
+        prefix = self.negative_data_prefix()
+        for path in data_dir.glob(f"{prefix}_epoch*_train.json"):
+            stem = path.stem  # {prefix}_epoch{N}_train
+            epoch_str = stem.removeprefix(f"{prefix}_epoch").removesuffix("_train")
             if epoch_str.isdigit():
                 candidates.append((int(epoch_str), path))
 
@@ -738,28 +870,28 @@ class AdaptiveNegativeSamplingTrainer(Trainer):
             with open(latest_path, "r", encoding="utf-8") as f:
                 payload = json.load(f)
         except Exception as e:
-            print(f"⚠️ 讀取 adaptive negatives 失敗: {latest_path} ({e})")
+            print(f"⚠️ 讀取 negatives 失敗: {latest_path} ({e})")
             return False
 
         if not payload:
-            print(f"⚠️ adaptive negatives 檔案為空: {latest_path}")
+            print(f"⚠️ negatives 檔案為空: {latest_path}")
             return False
 
         self.train_dataset.update_data(payload)
         print(
-            f"✅ 已載入最新 adaptive negatives: {latest_path.name} "
+            f"✅ 已載入最新 negatives: {latest_path.name} "
             f"(epoch={latest_epoch}, samples={len(payload)})"
         )
         return True
 
     def load_adaptive_data_for_epoch(self, epoch_index: int) -> bool:
-        """載入指定 epoch index 的 adaptive_negative_epoch{index}_train.json。"""
+        """載入指定 epoch index 的 negative data json。"""
         if not self.finetune_data_dir:
             return False
         if not hasattr(self.train_dataset, "update_data"):
             return False
 
-        target_path = Path(self.finetune_data_dir) / f"adaptive_negative_epoch{epoch_index}_train.json"
+        target_path = Path(self.finetune_data_dir) / f"{self.negative_data_prefix()}_epoch{epoch_index}_train.json"
         if not target_path.exists():
             return False
 
@@ -767,16 +899,16 @@ class AdaptiveNegativeSamplingTrainer(Trainer):
             with open(target_path, "r", encoding="utf-8") as f:
                 payload = json.load(f)
         except Exception as e:
-            print(f"⚠️ 讀取指定 adaptive negatives 失敗: {target_path} ({e})")
+            print(f"⚠️ 讀取指定 negatives 失敗: {target_path} ({e})")
             return False
 
         if not payload:
-            print(f"⚠️ 指定 adaptive negatives 檔案為空: {target_path}")
+            print(f"⚠️ 指定 negatives 檔案為空: {target_path}")
             return False
 
         self.train_dataset.update_data(payload)
         print(
-            f"✅ 已載入對應 epoch 的 adaptive negatives: {target_path.name} "
+            f"✅ 已載入對應 epoch 的 negatives: {target_path.name} "
             f"(epoch={epoch_index}, samples={len(payload)})"
         )
         return True
@@ -821,55 +953,76 @@ class AdaptiveNegativeSamplingTrainer(Trainer):
     def update_negative_samples(self):
         """更新訓練資料集的負樣本"""
         
-        print(f"🔹 正在為第{self.current_epoch}個epoch計算適應性負樣本...")
+        print(f"🔹 正在為第{self.current_epoch}個epoch產生 {self.negative_sampling_method} 負樣本...")
         
         try:
             # 確保輸出目錄存在
             os.makedirs(self.finetune_data_dir, exist_ok=True)
-            
-            # 使用模型計算相似度分數
-            helper_device = self.args.device if hasattr(self.args, 'device') else torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-            artifacts = generate_similarity_artifacts(
-                self.model,
-                self.tokenizer,
-                helper_device,
-                candidate_dir=self.candidate_dataset_path,
-                query_dir=self.query_dataset_path,
-                query_ids=self.train_qids,
-                trec_output_path=Path(self.finetune_data_dir) / f"similarity_scores_epoch{self.current_epoch}.tsv",
-                run_tag=f"modernBert_epoch{self.current_epoch}",
-                batch_size=self.retrieval_batch_size,
-                max_length=4096,
-                quick_test=QUICK_TEST,
-                candidate_files_override=_QT_CANDIDATE_FILES,
-                candidate_limit=QT_CAND_K,
-                query_limit=QT_QUERY_K,
-            )
-            query_id_to_similarities = artifacts.scores
-            
-            # 根據相似度分數生成新的負樣本
-            new_data = generate_adaptive_negative_samples(
-                query_id_to_similarities=query_id_to_similarities,
-                positives=self.positives,
-                max_negatives=15,
-                temperature=self.sampling_temperature
-            )
+
+            if self.negative_sampling_method == "random":
+                new_data, stats = generate_random_negative_samples(
+                    positives=self.positives,
+                    candidate_ids=self.candidate_ids,
+                    max_negatives=self.max_negatives,
+                    seed=self.random_negative_seed,
+                    epoch_index=self.current_epoch,
+                    query_candidate_scope=self.query_candidate_scope,
+                    train_qids=self.train_qids,
+                )
+                print(
+                    "🔹 隨機負樣本統計："
+                    f"queries={stats['queries']}, "
+                    f"missing_scope={stats['missing_scope_queries']}, "
+                    f"empty_pool={stats['empty_candidate_pool_queries']}, "
+                    f"replacement_pairs={stats['pairs_with_replacement']}, "
+                    f"skipped_pairs={stats['skipped_positive_pairs']}"
+                )
+            else:
+                # 使用模型計算相似度分數
+                helper_device = self.args.device if hasattr(self.args, 'device') else torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+                artifacts = generate_similarity_artifacts(
+                    self.model,
+                    self.tokenizer,
+                    helper_device,
+                    candidate_dir=self.candidate_dataset_path,
+                    query_dir=self.query_dataset_path,
+                    query_ids=self.train_qids,
+                    trec_output_path=Path(self.finetune_data_dir) / f"similarity_scores_epoch{self.current_epoch}.tsv",
+                    run_tag=f"modernBert_epoch{self.current_epoch}",
+                    batch_size=self.retrieval_batch_size,
+                    max_length=4096,
+                    quick_test=QUICK_TEST,
+                    candidate_files_override=_QT_CANDIDATE_FILES,
+                    candidate_limit=QT_CAND_K,
+                    query_limit=QT_QUERY_K,
+                )
+                query_id_to_similarities = artifacts.scores
+
+                # 根據相似度分數生成新的負樣本
+                new_data = generate_adaptive_negative_samples(
+                    query_id_to_similarities=query_id_to_similarities,
+                    positives=self.positives,
+                    max_negatives=self.max_negatives,
+                    temperature=self.sampling_temperature
+                )
             
             # 更新訓練資料集
             if hasattr(self.train_dataset, 'update_data'):
-                # 嚴格使用模型相似度抽樣的結果，不再退回 BM25
                 self.train_dataset.update_data(new_data)
                 # 儲存新的訓練資料（即使為空，也落檔以便檢查）
-                output_path = os.path.join(self.finetune_data_dir, f"adaptive_negative_epoch{self.current_epoch}_train.json")
+                output_path = os.path.join(self.finetune_data_dir, f"{self.negative_data_prefix()}_epoch{self.current_epoch}_train.json")
                 with open(output_path, 'w', encoding='utf-8') as f:
                     json.dump(new_data, f, indent=2, ensure_ascii=False)
-                print(f"✅ 已儲存適應性負樣本資料到 {output_path}")
+                print(f"✅ 已儲存負樣本資料到 {output_path}")
                 print(f"✅ 成功更新 {len(new_data)} 筆負樣本")
+                if not new_data:
+                    raise ValueError("產生的負樣本資料為空，無法訓練；請檢查 scope/filter 設定。")
             
         except Exception as e:
-            print(f"❌ 更新負樣本時發生錯誤（僅使用模型相似度，不退回BM25）: {e}")
+            print(f"❌ 更新負樣本時發生錯誤: {e}")
             import traceback
             traceback.print_exc()
+            raise
     
     # on_epoch_begin 由 callback 處理，避免重複責任來源
 
@@ -975,7 +1128,7 @@ class AdaptiveNegativeSamplingCallback(TrainerCallback):
                 prepared_epoch = getattr(self.trainer_instance, "_prepared_epoch_index", None)
                 if prepared_epoch is not None and current_epoch == prepared_epoch:
                     print(
-                        f"\n🔹 第{current_epoch}個epoch已依 checkpoint 預先準備動態負樣本，"
+                        f"\n🔹 第{current_epoch}個epoch已依 checkpoint 預先準備負樣本，"
                         "本輪跳過重算一次"
                     )
                     self.trainer_instance._prepared_epoch_index = None
@@ -1042,6 +1195,10 @@ def main():
     print(f"🔹 base encoder dir: {ckpt_dir}")
     print(f"🔹 output dir: {base_output_dir}")
     print(f"🔹 finetune data dir: {finetune_data_dir}")
+    print(f"🔹 negative sampling method: {NEGATIVE_SAMPLING_METHOD}")
+    print(f"🔹 max negatives per positive: {MAX_NEGATIVES}")
+    if NEGATIVE_SAMPLING_METHOD == "random":
+        print(f"🔹 random negative seed: {RANDOM_NEGATIVE_SEED}")
     if SCOPE_FILTER:
         if os.path.exists(default_scope_path):
             os.environ["LCR_QUERY_CANDIDATE_SCOPE_JSON"] = default_scope_path
@@ -1064,17 +1221,58 @@ def main():
     if QUICK_TEST:
         try:
             global _QT_CANDIDATE_FILES, _QT_TRAIN_QIDS, _QT_VALID_QIDS
-            all_cands = [fn for fn in os.listdir(doc_folder) if fn.endswith('.txt')]
-            k_c = min(QT_CAND_K, len(all_cands))
-            _QT_CANDIDATE_FILES = random.sample(all_cands, k_c) if k_c > 0 else []
+            available_candidate_ids = {
+                fn[:-4] for fn in os.listdir(doc_folder) if fn.endswith('.txt')
+            }
 
-            # 預先縮小 train/valid qids
+            # 預先縮小 train/valid qids，再依這些 qid 的 scope 挑 candidate。
             _QT_TRAIN_QIDS = load_query_ids_from_utils(train_qid_path)
             _QT_VALID_QIDS = load_query_ids_from_utils(valid_qid_path)
             if len(_QT_TRAIN_QIDS) > QT_QUERY_K:
                 _QT_TRAIN_QIDS = random.sample(_QT_TRAIN_QIDS, QT_QUERY_K)
             if len(_QT_VALID_QIDS) > QT_QUERY_K:
                 _QT_VALID_QIDS = random.sample(_QT_VALID_QIDS, QT_QUERY_K)
+
+            candidate_pool: list[str] = []
+            if SCOPE_FILTER and os.path.exists(default_scope_path):
+                scope = load_query_candidate_scope(default_scope_path)
+                seen_candidates: set[str] = set()
+                sampled_qids = list(_QT_TRAIN_QIDS) + list(_QT_VALID_QIDS)
+                per_query_k = max(1, QT_CAND_K // max(1, len(sampled_qids)))
+                for qid in sampled_qids:
+                    scoped_ids = [
+                        cid for cid in scope.get(str(qid), [])
+                        if cid in available_candidate_ids
+                    ]
+                    if not scoped_ids:
+                        continue
+                    picked = random.sample(scoped_ids, min(per_query_k, len(scoped_ids)))
+                    for cid in picked:
+                        if cid in seen_candidates:
+                            continue
+                        seen_candidates.add(cid)
+                        candidate_pool.append(cid)
+
+                if len(candidate_pool) < QT_CAND_K:
+                    scoped_union = [
+                        cid
+                        for qid in sampled_qids
+                        for cid in scope.get(str(qid), [])
+                        if cid in available_candidate_ids and cid not in seen_candidates
+                    ]
+                    if scoped_union:
+                        fill = random.sample(
+                            scoped_union,
+                            min(QT_CAND_K - len(candidate_pool), len(scoped_union)),
+                        )
+                        candidate_pool.extend(fill)
+                        seen_candidates.update(fill)
+
+            if not candidate_pool:
+                all_cands = sorted(available_candidate_ids)
+                candidate_pool = random.sample(all_cands, min(QT_CAND_K, len(all_cands)))
+
+            _QT_CANDIDATE_FILES = [f"{cid}.txt" for cid in candidate_pool[:QT_CAND_K]]
 
             print(f"[QUICK_TEST] Prepared {len(_QT_CANDIDATE_FILES)} candidates, train_q={len(_QT_TRAIN_QIDS)}, valid_q={len(_QT_VALID_QIDS)}")
         except Exception as e:
@@ -1090,6 +1288,9 @@ def main():
     # 5. 設定 TrainingArguments
     logging_dir = os.path.join(base_output_dir, "tb")
 
+    num_train_epochs = get_env_float("TASK1_NUM_TRAIN_EPOCHS", required=True)
+    early_stopping_patience = max(1, get_env_int("TASK1_EARLY_STOPPING_PATIENCE", required=True))
+
     args = TrainingArguments(
         output_dir=base_output_dir,
         dataloader_num_workers=8,
@@ -1100,7 +1301,7 @@ def main():
         bf16=False,
         tf32=False,
         learning_rate=5e-6,           # 給 encoder / projector
-        num_train_epochs=20,
+        num_train_epochs=num_train_epochs,
         warmup_ratio=0.1,
         lr_scheduler_type="linear",
         optim="adamw_torch_fused",  # 使用穩定的 AdamW 以配合 bf16 + TF32
@@ -1119,10 +1320,20 @@ def main():
         prediction_loss_only=False,
         logging_dir=logging_dir,
     )
+    if hasattr(args, "restore_callback_states_from_checkpoint"):
+        # Keep optimizer/scheduler/scaler/trainer_state resume, but do not
+        # restore EarlyStoppingCallback's stale patience counter. The previous
+        # run already stopped after patience was exhausted; restoring that
+        # callback state would make a continuation stop immediately.
+        args.restore_callback_states_from_checkpoint = False
     # ✅ 給 temperature 的專屬 LR（自行調整）
     args.temperature_lr = 5e-4
     print(f"   - Trainer bf16/fp16/tf32: bf16={args.bf16}, fp16={args.fp16}, tf32={args.tf32}")
     print(f"   - Retrieval batch size: {retrieval_batch_size}")
+    print(f"   - Num train epochs: {args.num_train_epochs}")
+    print(f"   - Early stopping patience: {early_stopping_patience}")
+    if hasattr(args, "restore_callback_states_from_checkpoint"):
+        print(f"   - Restore callback states: {args.restore_callback_states_from_checkpoint}")
 
     # 6. 建立 Trainer（使用 AdaptiveNegativeSamplingTrainer）
     trainer = AdaptiveNegativeSamplingTrainer(
@@ -1144,8 +1355,8 @@ def main():
             retrieval_batch_size=retrieval_batch_size,
         ),
         callbacks=[
-            EarlyStoppingCallback(early_stopping_patience=5), 
-            TempWatch(), 
+            EarlyStoppingCallback(early_stopping_patience=early_stopping_patience),
+            TempWatch(),
             TensorBoardExtras(),
             EvaluationCallback(
                 model=model,
@@ -1166,6 +1377,10 @@ def main():
         sampling_temperature=1.0,  # 可以調整這個參數來控制負樣本選擇的隨機性
         update_frequency=1,  # (整數)可以調整：1=每個epoch更新，2=每2個epoch更新一次，等等
         retrieval_batch_size=retrieval_batch_size,
+        negative_sampling_method=NEGATIVE_SAMPLING_METHOD,
+        max_negatives=MAX_NEGATIVES,
+        random_negative_seed=RANDOM_NEGATIVE_SEED,
+        query_candidate_scope_path=default_scope_path,
     )
 
     # 在每個 epoch 開始時依據最新模型重算相似度並重抽負樣本
@@ -1203,6 +1418,29 @@ def main():
             print("🔹 未找到 checkpoint，將從頭開始訓練")
     else:
         print("🔹 TASK1_AUTO_RESUME=0，將從頭開始訓練")
+
+    if resume_from_checkpoint:
+        state_path = Path(resume_from_checkpoint) / "trainer_state.json"
+        if state_path.exists():
+            try:
+                state = json.loads(state_path.read_text(encoding="utf-8"))
+                checkpoint_epoch = float(state.get("epoch", 0.0))
+                checkpoint_step = int(state.get("global_step", 0))
+                print(
+                    f"🔹 Resume checkpoint state: epoch={checkpoint_epoch}, "
+                    f"global_step={checkpoint_step}, best_metric={state.get('best_metric')}, "
+                    f"best_model_checkpoint={state.get('best_model_checkpoint')}"
+                )
+                if args.num_train_epochs <= checkpoint_epoch:
+                    raise ValueError(
+                        "TASK1_NUM_TRAIN_EPOCHS 必須大於 checkpoint 的 epoch，否則不會有新的訓練步數。"
+                        f" 目前 TASK1_NUM_TRAIN_EPOCHS={args.num_train_epochs}, "
+                        f"checkpoint_epoch={checkpoint_epoch}"
+                    )
+            except ValueError:
+                raise
+            except Exception as e:
+                print(f"⚠️ 無法讀取 checkpoint trainer_state.json: {state_path} ({e})")
 
     trainer.train(resume_from_checkpoint=resume_from_checkpoint)
     print(f"\n✅ 訓練與驗證完成！模型已儲存於：{args.output_dir}")

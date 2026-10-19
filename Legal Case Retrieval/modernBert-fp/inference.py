@@ -14,6 +14,7 @@ if str(PACKAGE_ROOT) not in sys.path:
 from lcr.device import get_device
 from lcr.embeddings import process_directory_to_embeddings
 from lcr.task1_paths import (
+    get_env,
     get_env_flag,
     get_env_int,
     get_task1_base_encoder_dir,

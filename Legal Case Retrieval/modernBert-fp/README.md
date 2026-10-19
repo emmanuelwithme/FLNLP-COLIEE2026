@@ -19,8 +19,9 @@
 ```bash
 bash run_pre_finetune.sh
 python "Legal Case Retrieval/modernBert-fp/fine_tune/fine_tune.py"
-bash run_train_valid_inference_eval.sh
-bash run_test_retrieval.sh
+python "Legal Case Retrieval/modernBert-fp/inference.py"
+python "Legal Case Retrieval/modernBert-fp/similarity_and_rank.py"
+python "Legal Case Retrieval/utils/eval.py"
 ```
 
 ### 沿用既有 checkpoint
@@ -34,8 +35,17 @@ bash run_test_retrieval.sh
 然後執行：
 
 ```bash
-bash run_train_valid_inference_eval.sh
-bash run_test_retrieval.sh
+python "Legal Case Retrieval/modernBert-fp/inference.py"
+python "Legal Case Retrieval/modernBert-fp/similarity_and_rank.py"
+python "Legal Case Retrieval/utils/eval.py"
+```
+
+若要處理 test split，先用 `process_test_files.py`、`prepare_test_pipeline_inputs.py` 與 `build_query_candidate_scope.py` 準備 `processed_test/`、`test_qid.tsv` 和 scope，再執行：
+
+```bash
+LCR_TEST_MODE=1 python "Legal Case Retrieval/modernBert-fp/inference.py"
+LCR_TEST_MODE=1 python "Legal Case Retrieval/modernBert-fp/similarity_and_rank.py"
+python "Legal Case Retrieval/utils/trec_to_submission.py" --help
 ```
 
 若要接 LTR：
@@ -125,7 +135,7 @@ checkpoint 與 backbone：
 TASK1_MODEL_ROOT_DIR=./models/my_task1_model \
 TASK1_BASE_ENCODER_DIR=./models/my_encoder/checkpoint-29000 \
 TASK1_RETRIEVAL_MODEL_NAME=my_task1_model \
-bash run_test_retrieval.sh
+python "Legal Case Retrieval/modernBert-fp/inference.py"
 ```
 
 repo root `.env` 會提供預設值，shell 變數可做單次覆寫。

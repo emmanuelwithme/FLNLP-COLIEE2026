@@ -27,16 +27,19 @@ conda activate FLNLP-COLIEE2026-WSL
 
 - Task 1 前處理: `bash run_pre_finetune.sh`
 - Task 1 dense 訓練: `python "Legal Case Retrieval/modernBert-fp/fine_tune/fine_tune.py"`
-- Task 1 train/valid retrieval 檢查: `bash run_train_valid_inference_eval.sh`
-- Task 1 test retrieval 匯出: `bash run_test_retrieval.sh`
+- Task 1 dense embeddings: `python "Legal Case Retrieval/modernBert-fp/inference.py"`
+- Task 1 train/valid ranking: `python "Legal Case Retrieval/modernBert-fp/similarity_and_rank.py"`
+- Task 1 評估: `python "Legal Case Retrieval/utils/eval.py"`
 - Task 1 LTR feature 與 fixed top-k 匯出: `bash run_ltr_feature_train_valid_test.sh`
 - Task 1 LTR cutoff search 與最終 submission 匯出: `bash run_ltr_cutoff_postprocess.sh`
-- Task 2 補充流程: `bash run_task2_finetune.sh`
+- Task 2 補充流程: 依 Task 2 文件執行資料準備、統計與訓練三個 Python 入口。
 
 ## 文件索引
 
 - 環境設定: [ENVIRONMENT.md](ENVIRONMENT.md)
 - Task 1 總覽: [Legal Case Retrieval/README.md](Legal%20Case%20Retrieval/README.md)
 - Task 1 dense retrieval: [Legal Case Retrieval/modernBert-fp/README.md](Legal%20Case%20Retrieval/modernBert-fp/README.md)
+- Task 1 ChunkAgg v5: [Legal Case Retrieval/modernBert-fp-chunkAgg/README.md](Legal%20Case%20Retrieval/modernBert-fp-chunkAgg/README.md)
+- Task 1 ChunkAgg v6: [Legal Case Retrieval/modernBert-fp-chunkAgg-v6/README.md](Legal%20Case%20Retrieval/modernBert-fp-chunkAgg-v6/README.md)
 - Task 1 LightGBM rerank: [Legal Case Retrieval/lightgbm/README.md](Legal%20Case%20Retrieval/lightgbm/README.md)
 - Task 2 paragraph 流程: [Legal Case Entailment by Mou/README.md](Legal%20Case%20Entailment%20by%20Mou/README.md)

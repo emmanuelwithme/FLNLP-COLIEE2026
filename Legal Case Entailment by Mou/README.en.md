@@ -16,19 +16,15 @@ After preparation:
 - each candidate paragraph is written to `processed_candidates/<caseid><paragraphid>.txt`
 - labels are flattened into paragraph-level positives
 
-## One-Command Flow
+## Execution Flow
 
 ```bash
-bash run_task2_finetune.sh
+python "Legal Case Entailment by Mou/prepare_task2_paragraph_data.py"
+python "Legal Case Entailment by Mou/analyze_task2_stats.py"
+python "Legal Case Entailment by Mou/fine_tune_task2.py"
 ```
 
-This wrapper will:
-
-- read the repo-root `.env`
-- activate `CONDA_ENV_NAME`
-- build paragraph-level data
-- optionally generate statistics
-- run `fine_tune_task2.py`
+All three entry points read the repo-root `.env`; activate the environment named by `CONDA_ENV_NAME` first. The statistics step is optional, but paragraph-level data preparation must finish before training.
 
 ## Manual Step-by-Step Flow
 
@@ -108,17 +104,16 @@ Training:
 - `TASK2_RETRIEVAL_BATCH_SIZE`
 - `TASK2_RETRIEVAL_MAX_LENGTH`
 
-Wrapper controls:
+Execution mode:
 
 - `TASK2_MODE`
-- `TASK2_SKIP_STATS`
 
 ## Test Mode
 
 ```bash
-TASK2_MODE=test bash run_task2_finetune.sh
+TASK2_MODE=test python "Legal Case Entailment by Mou/fine_tune_task2.py"
 ```
 
-Test mode uses a smaller query subset and appends `_test` to the output directory name.
+After data preparation, test mode uses a smaller query subset and appends `_test` to the output directory name. If statistics are not needed, simply omit the second command.
 
 The repo-root `.env` provides defaults, and shell variables can override them for a single run.

@@ -12,6 +12,7 @@
 - `lightgbm/`: feature 建立、`LGBMRanker` 訓練、cutoff postprocess。
 - `lcr/`: Task 1 共用模組。
 - `modernBert-fp-chunkAgg/`: chunk aggregation 實驗路線。
+- `modernBert-fp-chunkAgg-v6/`: 與 single-chunk baseline 負樣本公式對齊的隔離 multi-chunk 實驗。
 - `modernBert/fine_tune/`: BM25 hard-negative 產生器與額外訓練工具。
 
 ## 資料配置
@@ -69,23 +70,33 @@ python "Legal Case Retrieval/modernBert-fp/fine_tune/fine_tune.py"
 ### 3. train / valid retrieval 檢查
 
 ```bash
-bash run_train_valid_inference_eval.sh
+python "Legal Case Retrieval/modernBert-fp/inference.py"
+python "Legal Case Retrieval/modernBert-fp/similarity_and_rank.py"
+python "Legal Case Retrieval/utils/eval.py"
 ```
 
 這一步會產生：
 
-- train / valid BM25 ranking
 - dense embeddings
 - dense dot / cosine ranking
-- train / valid 指標摘要
+- train / valid 指標，並追加到 `Legal Case Retrieval/results/experiment_results.csv`
 
 ### 4. test retrieval 與 submission
 
+舊的 `run_test_retrieval.sh` wrapper 已移除。現在直接使用可組合的前處理、index、推論、ranking 與 submission CLI；各命令可先加 `--help` 確認參數：
+
 ```bash
-bash run_test_retrieval.sh
+python "Legal Case Retrieval/pre-process/process_test_files.py" --help
+python "Legal Case Retrieval/pre-process/prepare_test_pipeline_inputs.py" --help
+python "Legal Case Retrieval/pre-process/build_query_candidate_scope.py" --help
+bash "Legal Case Retrieval/lexical models/linux/index_test.sh"
+bash "Legal Case Retrieval/lexical models/linux/query_search_test.sh"
+LCR_TEST_MODE=1 python "Legal Case Retrieval/modernBert-fp/inference.py"
+LCR_TEST_MODE=1 python "Legal Case Retrieval/modernBert-fp/similarity_and_rank.py"
+python "Legal Case Retrieval/utils/trec_to_submission.py" --help
 ```
 
-這一步會產生：
+依 `.env` 指定輸入／輸出路徑後，這些步驟會產生：
 
 - `processed_test/`
 - `test_qid.tsv`
@@ -137,4 +148,5 @@ repo root wrapper 會先讀 `.env`，shell 先設定的值會優先於 `.env`。
 - Dense retrieval: [modernBert-fp/README.md](./modernBert-fp/README.md)
 - LightGBM rerank: [lightgbm/README.md](./lightgbm/README.md)
 - Chunk aggregation: [modernBert-fp-chunkAgg/README.md](./modernBert-fp-chunkAgg/README.md)
+- Chunk aggregation v6: [modernBert-fp-chunkAgg-v6/README.md](./modernBert-fp-chunkAgg-v6/README.md)
 - BM25 hard negatives 與額外訓練工具: [modernBert/fine_tune/README.md](./modernBert/fine_tune/README.md)
