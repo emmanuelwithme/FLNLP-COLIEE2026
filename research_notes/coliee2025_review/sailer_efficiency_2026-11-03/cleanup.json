@@ -1,0 +1,7 @@
+{
+  "deleted_directory": "/home/lab/FLNLP-COLIEE2026/models/modernBERT_bm25_top100_epoch_resample15_sailer_gc_2025",
+  "deleted_bytes": 14478108573,
+  "old_bm25_summary_sha256_unchanged": "c4093fd4450eb97b8410604d4d126cb151665104225b6cbf29d46046a8bfe527",
+  "validation_reports": "/home/lab/FLNLP-COLIEE2026/research_notes/coliee2025_review/sailer_efficiency_2026-11-03/validation",
+  "formal_training_started": false
+}

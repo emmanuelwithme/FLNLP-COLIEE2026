@@ -1,0 +1,34 @@
+{
+  "passed": true,
+  "model": "answerdotai/ModernBERT-base",
+  "max_length_observed": 4096,
+  "score_shape": [
+    4,
+    64
+  ],
+  "scheduler_steps": [
+    3,
+    6
+  ],
+  "optimizer_updates": [
+    3,
+    6
+  ],
+  "patience": [
+    0,
+    0
+  ],
+  "epoch_sample_hashes": [
+    "d418265116c3a7598a6cbe8f6d3fccd559e77994ab5eb95a307368290ef1aa5a",
+    "f722bda7c2af03348bd11c450ee704619efb9b7e61c4fff4a1d75992222a13ba"
+  ],
+  "checkpoint_reload_identical": true,
+  "peak_allocated_gib": 6.680703163146973,
+  "amp": {
+    "attempts": 6,
+    "updates": 6,
+    "skipped": 0,
+    "consecutive": 0
+  },
+  "rng_verified": true
+}

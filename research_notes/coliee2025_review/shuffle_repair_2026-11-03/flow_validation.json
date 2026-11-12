@@ -1,0 +1,44 @@
+{
+  "passed": true,
+  "epochs": 20,
+  "logical_batches": 27120,
+  "score_cells_checked": 6942720,
+  "mask_stats": {
+    "duplicate": 127235,
+    "known_positive_or_alias": 18331,
+    "allowed": 6794854,
+    "masked": 147866,
+    "queries": 108480,
+    "logical_batches": 27120,
+    "self_or_alias": 2300
+  },
+  "grouping_hashes": [
+    "2d494523dac7c385f38922ed5e35d93c3ea93b3ebdb41cafb92d3e62498d8cac",
+    "296d34f2af3093827addbea5970d4a5ff80f311965ff327ac9864e597f810daa",
+    "f331b51cf4434f1aef1c2d5a47cb2555f5691722e44cfd59ab9cc66352d02437",
+    "33ba29edc5df2fb6edac1b2d7ab8cd4fbdfe443434cf7f3828e233afd625155e",
+    "56139268f3c68b113f89647e5ddcb0e94f70d79889525e998adb3fd8a59ab57a",
+    "809693efd00e1194c029ec006452aecdd43c5b85f579be391df73a06cd4d2ade",
+    "5a5775ef9bf23a145bf229b42ca62cf346fc78e56d015b7ed1991cbec1e372a3",
+    "5de1cc5ff21e774b410009c5ad624c097125f3952786b1be1aa06362ec47392f",
+    "3440a671d29e9392a9796ea4659b3db3ef1667617834ec6ff92a0d20de1cf8a1",
+    "93f4841c099bec133ae47c8b3cda7d23140ff519909840118ffad3f29d6a2da6",
+    "babe2f86b2661f4569a62ff1ebc2c22360855ef7345283beae2ae01ba01cef2e",
+    "38127fde7838a17a5a0ca685572b8eedc6ca9188f66306df5c53a10466fc532c",
+    "1bdb8e3b2f4db018c96b8c6549c0879109bfa32e547dfef3a5d0759dd671f3d8",
+    "5c61f9587a384bba4a536d6af314ffa6d4c45e665889b90d9fc06ca9213c8c35",
+    "f9cf877122254544908d36e3e3c6489396cd571162596627a72f89fb8280d80c",
+    "1ecbeba66a9ab2b8e1bad6c658ab45ed83fb5910252a16cc54cf181143f31d56",
+    "08a4e9bb4b9a8376cce25fc79db5661f2cc8894a1a7ecb1a38f1e83421de691f",
+    "acfbddbf6917e8657e9754dd8392634b3d04b8faf862739db7605effc5391f1b",
+    "4b41551a58ec6e70571fe6dfca69908186b814ac34e63989804410c07b9f517a",
+    "37f0d16706d68b0ddeb01e505536c62d992bbcdda5da67ecc14c535ec7ed2491"
+  ],
+  "legacy_saved_samples_unchanged": {
+    "epoch_01_train.json": true,
+    "epoch_02_train.json": true
+  },
+  "legacy_saved_config_and_implementation_match": true,
+  "seconds": 23.53066991805099,
+  "scope": "CPU real data mask contracts; no model forward/backward or live training changes"
+}

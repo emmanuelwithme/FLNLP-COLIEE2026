@@ -9,6 +9,7 @@ This directory contains the full COLIEE Task 1 workflow and is the primary worki
 - `pre-process/`: raw-file processing, label split, and scope JSON generation.
 - `lexical models/`: BM25 / QLD indexing and search.
 - `modernBert-fp/`: dense encoder training, embeddings, and ranking.
+- [`modernBert-bm25/`](modernBert-bm25/README.md): original ModernBERT-base on COLIEE 2025, resampling 15 negatives from the original BM25 top-100 ranks each epoch. Also supports [SAILER-style in-batch negatives, Label Mask and GradCache](modernBert-bm25/SAILER_GRADCACHE.md), with [four-query grouping validation](modernBert-bm25/GROUPING.md). Formal and debug modes share training code; separate configs isolate pairwise, v3 and legacy v2 outputs and resume behavior.
 - `lightgbm/`: feature generation, `LGBMRanker` training, and cutoff post-processing.
 - `lcr/`: shared Task 1 modules.
 - `modernBert-fp-chunkAgg/`: chunk-aggregation experiment path.

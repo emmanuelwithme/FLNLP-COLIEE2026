@@ -9,6 +9,29 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+# Python 測試與工具快取
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.venv/
+# 保留 .env、JSON 設定與 reports/modernbert-bm25/training_records/ 訓練快照
+# 忽略可重產的統計明細、重複診斷輸出及暫存檔
+/reports/modernbert-bm25/grouping/
+/reports/modernbert-bm25/benchmark/
+/reports/modernbert-bm25/**/summary.partial.json
+/reports/modernbert-bm25/**/*.tmp
+/research_notes/coliee2025_review/**/summary.partial.json
+/research_notes/coliee2025_review/**/*.tmp
+/research_notes/coliee2025_review/**/*.log
+/research_notes/coliee2025_review/shuffle_repair_*/new_policy.json
+/research_notes/coliee2025_review/shuffle_repair_*/legacy_policy.json
+# 個人會議、規劃與 AI 交接草稿保留本機；技術說明與驗證摘要仍納入 Git
+/research_notes/coliee2025_review/AI_HANDOFF_*.md
+/research_notes/coliee2025_review/finish_plan_60_days.md
+/research_notes/coliee2025_review/meeting_handbook.md
 # vscode
 .vscode/
 # AI

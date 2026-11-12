@@ -1,0 +1,69 @@
+{
+  "date": "2026-11-06",
+  "timezone": "Asia/Taipei",
+  "scope": "Commit preparation: CPU checks only; no model training, checkpoint inference, GPU benchmark, or historical large-statistics rerun.",
+  "unittest": {
+    "discovered": 72,
+    "passed": 68,
+    "skipped_gpu": 4,
+    "status": "passed",
+    "command": "python -m unittest discover -s \"Legal Case Retrieval/modernBert-bm25/tests\" -v"
+  },
+  "preflight": {
+    "status": "passed",
+    "train_queries": 1341,
+    "valid_queries": 336,
+    "train_pairs": 5421,
+    "valid_pairs": 1421,
+    "candidates": 7349,
+    "train_pool_range": [
+      83,
+      99
+    ],
+    "valid_pool_range": [
+      87,
+      99
+    ],
+    "data_hash": "dada68cdbf9d094ea8e771bae16982c9a18b110e747d5bc1397c1682eb974662"
+  },
+  "grouping_tool_short_run": {
+    "status": "passed",
+    "seeds": 2,
+    "legacy_seeds": 2,
+    "epochs_per_seed": 2,
+    "stress_cases": 100,
+    "full_negative_epochs": 2,
+    "output_dir": "reports/modernbert-bm25/grouping/20261105T172435854623Z"
+  },
+  "label_mask_flow_short_run": {
+    "status": "passed",
+    "epochs": 2,
+    "logical_batches": 2712,
+    "score_cells_checked": 694272,
+    "legacy_config_matches": true,
+    "output_dir": "reports/modernbert-bm25/grouping/20261105T172618215742Z"
+  },
+  "cli_help": {
+    "status": "passed",
+    "entrypoints": [
+      "fine_tune/fine_tune.py",
+      "fine_tune/fine_tune_sailer.py",
+      "prepare_data.py",
+      "inference.py",
+      "similarity_and_rank.py",
+      "find_best_model.py",
+      "validate_grouping.py",
+      "benchmark_sailer.py"
+    ]
+  },
+  "syntax_json_links_and_whitespace": {
+    "status": "passed",
+    "scope": "Changed and new version-control candidates. Settings, research notes, complete reports and validation logs remain eligible for version control; only caches and incomplete temporary reports are newly ignored."
+  },
+  "source_sha256": {
+    "Legal Case Retrieval/modernBert-bm25/config.py": "4ac19cf95909fc16027ea11fa4715f63de3f943f4062c920d633f34fa7de49a0",
+    "Legal Case Retrieval/modernBert-bm25/validate_grouping.py": "ad148463eabc414c880f321ad129a0af093ac14f71611abf0c847eb1d858ccf4",
+    "Legal Case Retrieval/modernBert-bm25/benchmark_sailer.py": "07dcfa67b5c9b6e067efdba1e9619a89f53aa1241dd38b3a8cd4ce70392d946b",
+    "Legal Case Retrieval/modernBert-bm25/fine_tune/batch_grouping.py": "7ee2cd9df2e6291e9ea8f49ddf33605653a6ad3d66a2c8a1b76f27604d11f2e4"
+  }
+}

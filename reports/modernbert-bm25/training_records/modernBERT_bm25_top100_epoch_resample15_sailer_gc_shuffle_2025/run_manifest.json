@@ -1,0 +1,45 @@
+{
+  "implementation": "modernBert-sailer-gradcache-v3",
+  "data_hash": "dada68cdbf9d094ea8e771bae16982c9a18b110e747d5bc1397c1682eb974662",
+  "environment": {
+    "versions": {
+      "torch": "2.6.0+cu126",
+      "transformers": "4.52.4",
+      "accelerate": "1.6.0",
+      "flash-attn": "2.7.4.post1",
+      "tensorboard": "2.20.0"
+    },
+    "gpu": "NVIDIA GeForce RTX 4080 SUPER",
+    "reference_source_sha256": {
+      "fine_tune/fine_tune.py": "c3031b97a28e94309ecb14698c39c4080e94193d296f2a92d57b46846c6234f5",
+      "fine_tune/modernbert_contrastive_model.py": "bf1cb04ea8a3a6360e3322af757d20ba51ad427118c2826f10bbfb3e5cd54fc1"
+    },
+    "python_source_sha256": {
+      "benchmark_sailer.py": "b26b679dccee11d8a948b0b3e3ca7c3bf76f7853ffd8b4841759019855d7e46d",
+      "config.py": "536d84df3e804a3f6252c91cd71a2184a98167ff788a18a1c9997b7485d1a586",
+      "find_best_model.py": "37b1fb80992784896bdab88ca648f47ac1f90bbe60852ccea6a8f52ade5fb5f0",
+      "fine_tune/__init__.py": "325a0604b7bdfd944f39a37a2c4d510e8b8619638abaa86823ea59a75f45be31",
+      "fine_tune/batch_grouping.py": "7ee2cd9df2e6291e9ea8f49ddf33605653a6ad3d66a2c8a1b76f27604d11f2e4",
+      "fine_tune/data.py": "f803d76cd43dd4e138d4c7dcd1d2846c9c1acf9c58ff69788422140e0d23d127",
+      "fine_tune/fine_tune.py": "d5b655cbd392d2aa14e2a837af4fb87cae6a2ae704daf470ac74223e29cfbbf6",
+      "fine_tune/fine_tune_sailer.py": "81ae660104862029a30d5dae26b229376eff02a130ea83594f0671942d4538e9",
+      "fine_tune/gradcache.py": "279e4a863806f15a12eb43c7de411719e79d0f1e13a13cd514d3521cb9e4177f",
+      "fine_tune/modernbert_contrastive_model.py": "24d9713b0146cb3253af55239134ded78e46ff305419abd2865fd2e685e1424c",
+      "fine_tune/sailer.py": "fa7ef1b07820466f9086270a86dffbf914a0a05db447a4d8db45b9243f839195",
+      "inference.py": "45374e4c9289970fd5c950cf2ef2b552549fdb0f330daf28b613e8463d732bb6",
+      "prepare_data.py": "c7a966c632f55d05f06bbd8532ade9f7d2b4be7233f4cdfd7882c34bcea710b8",
+      "similarity_and_rank.py": "05536d3eb41b104415bf4ad0f25c85b60059dacd34871e30d535f66f52184e58",
+      "tests/test_batch_grouping.py": "6efc17b6673b1e70ccc4974ad1625f8c83a7084b722e1f005c0847f1b1a18bd5",
+      "tests/test_flow.py": "2e55d088a417aabfc2df7ec129525be3971342b0cd2a22159d9775aac12a88bc",
+      "tests/test_gpu_amp.py": "0397c18e3a9b394b8cbc179c8e41a778803c1f2f92a8751fe9379410984e0743",
+      "tests/test_integration.py": "8e31f9b8874cbaed5d1db36179a041cfbfb68bbfcf8f46f2033f1b34243df1af",
+      "tests/test_sailer.py": "32950c55349004f992baa49c0299dedb50a2001ab6ecafd7ccf54c3ce66ffad8",
+      "tests/test_sailer_gpu.py": "13307f0184bca2f3e7507a30d6b09c4bf6834237556b5322f870e659e2ad59a2",
+      "tests/test_training.py": "7912980c5adc181bf5a93657c5d3db485a91383f27a219aa43f74ea8fc13bc06",
+      "validate_grouping.py": "023f23bc2733fcd6f1f2aab915bcd25ae5dc733d5dbc254e8aaa2e3557352f48"
+    }
+  },
+  "model_name": "answerdotai/ModernBERT-base",
+  "model_revision": "8949b909ec900327062f0ebf497f51aef5e6f0c8",
+  "note": "Current 2025 snapshot; self negatives corrected; not a resampling-only historical ablation."
+}

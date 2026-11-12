@@ -21,12 +21,15 @@ conda activate FLNLP-COLIEE2026-WSL
 
 - Put dataset paths, model paths, and run parameters there.
 - For one-off runs, shell environment variables override `.env`.
+- The isolated `modernBert-bm25` COLIEE 2025 experiment uses its own JSON config and does not read the root `.env`.
 - Shared model directories are stored under `models/`.
 
 3. Choose a workflow.
 
 - Task 1 preprocessing: `bash run_pre_finetune.sh`
 - Task 1 dense training: `python "Legal Case Retrieval/modernBert-fp/fine_tune/fine_tune.py"`
+- Task 1 BM25 epoch-resampling experiment: `python -u "Legal Case Retrieval/modernBert-bm25/fine_tune/fine_tune.py" --no-debug`
+- Task 1 BM25 with SAILER-style in-batch negatives and GradCache: `python -u "Legal Case Retrieval/modernBert-bm25/fine_tune/fine_tune_sailer.py" --no-debug`
 - Task 1 dense embeddings: `python "Legal Case Retrieval/modernBert-fp/inference.py"`
 - Task 1 train/valid ranking: `python "Legal Case Retrieval/modernBert-fp/similarity_and_rank.py"`
 - Task 1 evaluation: `python "Legal Case Retrieval/utils/eval.py"`
@@ -39,6 +42,8 @@ conda activate FLNLP-COLIEE2026-WSL
 - Environment: [ENVIRONMENT.en.md](ENVIRONMENT.en.md)
 - Task 1 overview: [Legal Case Retrieval/README.en.md](Legal%20Case%20Retrieval/README.en.md)
 - Task 1 dense retrieval: [Legal Case Retrieval/modernBert-fp/README.en.md](Legal%20Case%20Retrieval/modernBert-fp/README.en.md)
+- Task 1 original ModernBERT-base with BM25 epoch resampling: [Guide (Chinese)](Legal%20Case%20Retrieval/modernBert-bm25/README.md) | [SAILER-style GradCache](Legal%20Case%20Retrieval/modernBert-bm25/SAILER_GRADCACHE.md) | [Grouping validation](Legal%20Case%20Retrieval/modernBert-bm25/GROUPING.md)
+- COLIEE experiment audits and historical validation: [Research records (Chinese)](research_notes/coliee2025_review/README.md)
 - Task 1 ChunkAgg v5: [Legal Case Retrieval/modernBert-fp-chunkAgg/README.en.md](Legal%20Case%20Retrieval/modernBert-fp-chunkAgg/README.en.md)
 - Task 1 ChunkAgg v6: [Legal Case Retrieval/modernBert-fp-chunkAgg-v6/README.en.md](Legal%20Case%20Retrieval/modernBert-fp-chunkAgg-v6/README.en.md)
 - Task 1 LightGBM rerank: [Legal Case Retrieval/lightgbm/README.en.md](Legal%20Case%20Retrieval/lightgbm/README.en.md)

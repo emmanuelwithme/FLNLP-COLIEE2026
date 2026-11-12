@@ -1,0 +1,4067 @@
+{
+  "date": "2026-11-03",
+  "mode": "CPU read-only inspection; no training or encoder inference",
+  "scope_path": "coliee_dataset/task1/2026/lht_process/scope_compare/query_candidate_scope_raw_plus0_empty_exclude.json",
+  "scope_sha256": "e74046a433493558e5504317b3f33d68772199835b087b0d08e4cb44f6522a47",
+  "source_sha256": "c3031b97a28e94309ecb14698c39c4080e94193d296f2a92d57b46846c6234f5",
+  "candidate_files": 7708,
+  "splits": {
+    "train": {
+      "queries": 1600,
+      "gold_pairs": 6595,
+      "empty_scope_queries": {
+        "094196": [
+          "003622",
+          "007589",
+          "008545",
+          "023998",
+          "037271"
+        ],
+        "050119": [
+          "003335",
+          "017936",
+          "023998",
+          "035275",
+          "054403"
+        ],
+        "029713": [
+          "066798"
+        ],
+        "039187": [
+          "089328"
+        ],
+        "004393": [
+          "010556",
+          "012439",
+          "027924",
+          "066923"
+        ],
+        "034757": [
+          "005220",
+          "011785",
+          "012510",
+          "029271",
+          "045781",
+          "059275"
+        ]
+      },
+      "nonempty_scope_gold_pairs": 6573
+    },
+    "valid": {
+      "queries": 401,
+      "gold_pairs": 1656,
+      "empty_scope_queries": {
+        "004467": [
+          "045271",
+          "052084"
+        ],
+        "050666": [
+          "033171",
+          "089855"
+        ]
+      },
+      "nonempty_scope_gold_pairs": 1652
+    }
+  },
+  "samples": {
+    "adaptive": {
+      "files": [
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/adaptive_negative_epoch0_train.json",
+          "sha256": "290356828dc3b5e1311f55333503311097b370261d7c5adaf12374cec397a137",
+          "epoch_index": 0,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "10e1c61f2cf8e22f66f7a7413758756f2159d4c87d219d28b816c0d120d71cde",
+          "exact_random_replay": null
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/adaptive_negative_epoch1_train.json",
+          "sha256": "cd01b1f5e369a6c83a34e310f38ef989814f3948e9dc0e94afd2946a6464fc3e",
+          "epoch_index": 1,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "10e1c61f2cf8e22f66f7a7413758756f2159d4c87d219d28b816c0d120d71cde",
+          "exact_random_replay": null
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/adaptive_negative_epoch2_train.json",
+          "sha256": "39ea7ebcc6f501d14adf3572f642df73527e98c6da694b88b82c8897d738ca62",
+          "epoch_index": 2,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "10e1c61f2cf8e22f66f7a7413758756f2159d4c87d219d28b816c0d120d71cde",
+          "exact_random_replay": null
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/adaptive_negative_epoch3_train.json",
+          "sha256": "c4159dbd626f52c0e4e951b7d4627750e9f9220f30f3ba2f1580ef5f3b9c2703",
+          "epoch_index": 3,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "10e1c61f2cf8e22f66f7a7413758756f2159d4c87d219d28b816c0d120d71cde",
+          "exact_random_replay": null
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/adaptive_negative_epoch4_train.json",
+          "sha256": "7fb800e5809204ba9f1848739e8b95f1a659ab04b7082a3fb98c92ebfc2664d3",
+          "epoch_index": 4,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "10e1c61f2cf8e22f66f7a7413758756f2159d4c87d219d28b816c0d120d71cde",
+          "exact_random_replay": null
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/adaptive_negative_epoch5_train.json",
+          "sha256": "0ccaf2adc531f312907e0dfb3e5b7ba5c34447a69e2a2391401da39e231390a2",
+          "epoch_index": 5,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "10e1c61f2cf8e22f66f7a7413758756f2159d4c87d219d28b816c0d120d71cde",
+          "exact_random_replay": null
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/adaptive_negative_epoch6_train.json",
+          "sha256": "97608dd97fe98f3128783730eea41c94dbec707811aa876d7557a90fdb4d1f53",
+          "epoch_index": 6,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "10e1c61f2cf8e22f66f7a7413758756f2159d4c87d219d28b816c0d120d71cde",
+          "exact_random_replay": null
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/adaptive_negative_epoch7_train.json",
+          "sha256": "9c6fd1ea96f8b11b3ca2b8d8a96529f124feecbf1e276ee92e099e18b5f6300f",
+          "epoch_index": 7,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "10e1c61f2cf8e22f66f7a7413758756f2159d4c87d219d28b816c0d120d71cde",
+          "exact_random_replay": null
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/adaptive_negative_epoch8_train.json",
+          "sha256": "f19aab6200811a2c62024af9ff2bc73ceb9302a90f13b68439d7cad0be227aa1",
+          "epoch_index": 8,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "10e1c61f2cf8e22f66f7a7413758756f2159d4c87d219d28b816c0d120d71cde",
+          "exact_random_replay": null
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/adaptive_negative_epoch9_train.json",
+          "sha256": "e3c5ac0d8cb54eecc1db097ad1147222927a628ead65f4ba4cb3b4eb27707076",
+          "epoch_index": 9,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "10e1c61f2cf8e22f66f7a7413758756f2159d4c87d219d28b816c0d120d71cde",
+          "exact_random_replay": null
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/adaptive_negative_epoch10_train.json",
+          "sha256": "ed137e1b2b0368829f656506002d6955d91d92096fba2a74ad2a9198b74a6840",
+          "epoch_index": 10,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "10e1c61f2cf8e22f66f7a7413758756f2159d4c87d219d28b816c0d120d71cde",
+          "exact_random_replay": null
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/adaptive_negative_epoch11_train.json",
+          "sha256": "484bf6799ef70aa33c579f4ce98e8f18f1b07655e1b2418e8de68a6d725ed87e",
+          "epoch_index": 11,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "10e1c61f2cf8e22f66f7a7413758756f2159d4c87d219d28b816c0d120d71cde",
+          "exact_random_replay": null
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/adaptive_negative_epoch12_train.json",
+          "sha256": "f48d4dcacffa1701c43ff985426e4037cdfa5901d1ce90fb43718b872fcdad18",
+          "epoch_index": 12,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d7bcacf321b04f3046cecd63231b7d87038ab250042f0e4b9ae8d0f7565cd44a",
+          "exact_random_replay": null
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/adaptive_negative_epoch13_train.json",
+          "sha256": "a4b4b24b420b354ce523842312602ccd89e386fdcef8ebd84e7ad59000a177f3",
+          "epoch_index": 13,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d7bcacf321b04f3046cecd63231b7d87038ab250042f0e4b9ae8d0f7565cd44a",
+          "exact_random_replay": null
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/adaptive_negative_epoch14_train.json",
+          "sha256": "6f9b0e1a03758bef7dc69fc8000521bf61bd2dd2fc6bb153271c4bc44d9ed13a",
+          "epoch_index": 14,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d7bcacf321b04f3046cecd63231b7d87038ab250042f0e4b9ae8d0f7565cd44a",
+          "exact_random_replay": null
+        }
+      ],
+      "negative_slots": 1478925,
+      "outside_scope_slots": 0,
+      "self_slots": 0,
+      "positive_slots": 0,
+      "duplicate_negative_rows": 0,
+      "pairsets_constant": true,
+      "row_orders_constant": false,
+      "random_exact_replay": null
+    },
+    "random": {
+      "files": [
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/random_negative_epoch0_train.json",
+          "sha256": "20b590998d642e3aab5e91fe305502bc5421bbb30a6e8bd2aa4f5a22d5251780",
+          "epoch_index": 0,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d16683555a1c71684fbcb2b7363c471e6645e2aec3330852aab6a6cc194b14f8",
+          "exact_random_replay": true
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/random_negative_epoch1_train.json",
+          "sha256": "e0a9ba673b58a67c241b026d6bf7d2f3f3e5ce3b42a215d06010fd4a81ad2aac",
+          "epoch_index": 1,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d16683555a1c71684fbcb2b7363c471e6645e2aec3330852aab6a6cc194b14f8",
+          "exact_random_replay": true
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/random_negative_epoch2_train.json",
+          "sha256": "e19a79825d54090aca3a4e2295d5946de8986d244099ec4233b53166386acd0e",
+          "epoch_index": 2,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d16683555a1c71684fbcb2b7363c471e6645e2aec3330852aab6a6cc194b14f8",
+          "exact_random_replay": true
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/random_negative_epoch3_train.json",
+          "sha256": "d4ea6d4b76be67d7ed644cd9291d8d78bce87815a3f4736d3016dc175f54e3e3",
+          "epoch_index": 3,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d16683555a1c71684fbcb2b7363c471e6645e2aec3330852aab6a6cc194b14f8",
+          "exact_random_replay": true
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/random_negative_epoch4_train.json",
+          "sha256": "db16368b17d19e3a2f136ce4e7bfac684ba744b527e2ebdeb5af6fa41af297b1",
+          "epoch_index": 4,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d16683555a1c71684fbcb2b7363c471e6645e2aec3330852aab6a6cc194b14f8",
+          "exact_random_replay": true
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/random_negative_epoch5_train.json",
+          "sha256": "6a3fde4a7f794beb2e70918afcfcd605a12b187aaccc492d78ca0e24e73e7e73",
+          "epoch_index": 5,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d16683555a1c71684fbcb2b7363c471e6645e2aec3330852aab6a6cc194b14f8",
+          "exact_random_replay": true
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/random_negative_epoch6_train.json",
+          "sha256": "acdd9939f238ed0c2f80e813c11d8c6cd7a1d40f351061bf902d59f88fc05c73",
+          "epoch_index": 6,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d16683555a1c71684fbcb2b7363c471e6645e2aec3330852aab6a6cc194b14f8",
+          "exact_random_replay": true
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/random_negative_epoch7_train.json",
+          "sha256": "fb71bf0525062299b9ad83ec77cf505ecab46308165c68a46d8f5d27f2464c1e",
+          "epoch_index": 7,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d16683555a1c71684fbcb2b7363c471e6645e2aec3330852aab6a6cc194b14f8",
+          "exact_random_replay": true
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/random_negative_epoch8_train.json",
+          "sha256": "7badbade45b9f89e2da207c6d7b20e87ed527aa6a7fefe0a291e50b3808a96fa",
+          "epoch_index": 8,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d16683555a1c71684fbcb2b7363c471e6645e2aec3330852aab6a6cc194b14f8",
+          "exact_random_replay": true
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/random_negative_epoch9_train.json",
+          "sha256": "a63850658f396b354dca4b5fa077d8560c15469d8b89aff063b87fe55c4890cd",
+          "epoch_index": 9,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d16683555a1c71684fbcb2b7363c471e6645e2aec3330852aab6a6cc194b14f8",
+          "exact_random_replay": true
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/random_negative_epoch10_train.json",
+          "sha256": "5eb2e210623fabeaf0c23bc319fbc8156a0388669e5dee081bfb9d463cc3538b",
+          "epoch_index": 10,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d16683555a1c71684fbcb2b7363c471e6645e2aec3330852aab6a6cc194b14f8",
+          "exact_random_replay": true
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/random_negative_epoch11_train.json",
+          "sha256": "cd776eba5ff5f0d8db8d5db7389083a757394ec24b6b99ce9396ef86dfdabb18",
+          "epoch_index": 11,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d16683555a1c71684fbcb2b7363c471e6645e2aec3330852aab6a6cc194b14f8",
+          "exact_random_replay": true
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/random_negative_epoch12_train.json",
+          "sha256": "a4e4ec888ce7bddbc99f0622bae461563575f025ace3260c91707b09f1ef9304",
+          "epoch_index": 12,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d16683555a1c71684fbcb2b7363c471e6645e2aec3330852aab6a6cc194b14f8",
+          "exact_random_replay": true
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/random_negative_epoch13_train.json",
+          "sha256": "412c4b6607c3096ba4e0753a435613d3e6bd29a76c7008d8d72054dc8b5245cb",
+          "epoch_index": 13,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d16683555a1c71684fbcb2b7363c471e6645e2aec3330852aab6a6cc194b14f8",
+          "exact_random_replay": true
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/random_negative_epoch14_train.json",
+          "sha256": "0135da0a0b350d4fdded1778fefd3e8f84ff355ad65cdec82c09aaa84d4b7280",
+          "epoch_index": 14,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d16683555a1c71684fbcb2b7363c471e6645e2aec3330852aab6a6cc194b14f8",
+          "exact_random_replay": true
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/random_negative_epoch15_train.json",
+          "sha256": "08621f7c3ffe651438c7e23cd775c1886f16036f692a069f6750edcf67060917",
+          "epoch_index": 15,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d16683555a1c71684fbcb2b7363c471e6645e2aec3330852aab6a6cc194b14f8",
+          "exact_random_replay": true
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/random_negative_epoch16_train.json",
+          "sha256": "f55b29ac659f85d9e7db28b4eafa12752f193740a61cc593d8330f32a7830e0f",
+          "epoch_index": 16,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d16683555a1c71684fbcb2b7363c471e6645e2aec3330852aab6a6cc194b14f8",
+          "exact_random_replay": true
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/random_negative_epoch17_train.json",
+          "sha256": "498dc100bb426ec47c1694bc60dec43e4fd25c3dcfcdd258dddd20061b5c39d2",
+          "epoch_index": 17,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d16683555a1c71684fbcb2b7363c471e6645e2aec3330852aab6a6cc194b14f8",
+          "exact_random_replay": true
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/random_negative_epoch18_train.json",
+          "sha256": "6bc995e9a737e2c694be67a7ea9cd7b534b2420ecf8620ac0c36bfb8249e4daa",
+          "epoch_index": 18,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d16683555a1c71684fbcb2b7363c471e6645e2aec3330852aab6a6cc194b14f8",
+          "exact_random_replay": true
+        },
+        {
+          "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/random_negative_epoch19_train.json",
+          "sha256": "7216f86e579d677e370ab1221fee2a724fa5688d7a526aefdf890f68128d1ee5",
+          "epoch_index": 19,
+          "rows": 6573,
+          "queries": 1594,
+          "outside_scope_positive_pairs": 311,
+          "order_sha256": "d16683555a1c71684fbcb2b7363c471e6645e2aec3330852aab6a6cc194b14f8",
+          "exact_random_replay": true
+        }
+      ],
+      "negative_slots": 1971900,
+      "outside_scope_slots": 0,
+      "self_slots": 0,
+      "positive_slots": 0,
+      "duplicate_negative_rows": 0,
+      "pairsets_constant": true,
+      "row_orders_constant": true,
+      "random_exact_replay": true
+    }
+  },
+  "rankings": {
+    "adaptive_epoch0_mining": {
+      "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/similarity_scores_epoch0.tsv",
+      "rows": 7961237,
+      "query_blocks": 1594,
+      "scope_mismatches": 0,
+      "duplicate_rows": 0,
+      "query_ids": [
+        "008447",
+        "007627",
+        "006769",
+        "078422",
+        "043774",
+        "031183",
+        "039087",
+        "008653",
+        "030394",
+        "043815",
+        "001499",
+        "006704",
+        "068182",
+        "031284",
+        "046467",
+        "004108",
+        "040560",
+        "037117",
+        "088711",
+        "078681",
+        "039421",
+        "070711",
+        "050190",
+        "060807",
+        "093016",
+        "071236",
+        "008771",
+        "087599",
+        "009186",
+        "038947",
+        "046489",
+        "015031",
+        "000092",
+        "089555",
+        "057136",
+        "083086",
+        "007135",
+        "066194",
+        "079913",
+        "076990",
+        "092332",
+        "024157",
+        "069872",
+        "007667",
+        "098226",
+        "060686",
+        "099856",
+        "058009",
+        "001510",
+        "069976",
+        "077380",
+        "029645",
+        "014909",
+        "022731",
+        "070873",
+        "024648",
+        "055208",
+        "042691",
+        "005409",
+        "007137",
+        "075527",
+        "061651",
+        "081919",
+        "040239",
+        "062436",
+        "087285",
+        "079028",
+        "076491",
+        "046080",
+        "026213",
+        "000669",
+        "096028",
+        "099898",
+        "017391",
+        "069092",
+        "011450",
+        "070433",
+        "076365",
+        "098576",
+        "056717",
+        "036162",
+        "092224",
+        "079208",
+        "060780",
+        "035213",
+        "046478",
+        "031641",
+        "015420",
+        "097277",
+        "004700",
+        "096651",
+        "064109",
+        "022931",
+        "014007",
+        "045787",
+        "001884",
+        "048500",
+        "056909",
+        "002760",
+        "012713",
+        "014411",
+        "080529",
+        "040801",
+        "016293",
+        "084828",
+        "062926",
+        "098780",
+        "003218",
+        "042705",
+        "087773",
+        "049423",
+        "016058",
+        "037440",
+        "037809",
+        "083342",
+        "037853",
+        "099187",
+        "064936",
+        "006909",
+        "073494",
+        "005862",
+        "069632",
+        "064402",
+        "020453",
+        "054027",
+        "076969",
+        "048771",
+        "052909",
+        "079200",
+        "053170",
+        "091318",
+        "055546",
+        "011121",
+        "039086",
+        "018440",
+        "050528",
+        "043523",
+        "098080",
+        "097926",
+        "072112",
+        "086250",
+        "057595",
+        "013201",
+        "043843",
+        "071437",
+        "048477",
+        "056963",
+        "036579",
+        "060404",
+        "064116",
+        "073640",
+        "016438",
+        "000085",
+        "090936",
+        "096679",
+        "072292",
+        "028914",
+        "098605",
+        "037011",
+        "069228",
+        "011447",
+        "093729",
+        "092346",
+        "050332",
+        "051749",
+        "005628",
+        "060653",
+        "063855",
+        "019821",
+        "076286",
+        "065642",
+        "026998",
+        "052170",
+        "077071",
+        "072315",
+        "093206",
+        "000418",
+        "084496",
+        "035016",
+        "003263",
+        "079235",
+        "080908",
+        "057543",
+        "059429",
+        "035550",
+        "024224",
+        "071899",
+        "087884",
+        "083380",
+        "026056",
+        "034622",
+        "041961",
+        "094946",
+        "060931",
+        "034867",
+        "073337",
+        "069868",
+        "039621",
+        "019591",
+        "060425",
+        "015997",
+        "024927",
+        "099124",
+        "076138",
+        "024409",
+        "061129",
+        "023554",
+        "048230",
+        "029207",
+        "082829",
+        "065028",
+        "082790",
+        "055968",
+        "061177",
+        "008173",
+        "073660",
+        "078150",
+        "022093",
+        "025322",
+        "004066",
+        "042740",
+        "031822",
+        "093057",
+        "081675",
+        "089448",
+        "069510",
+        "066101",
+        "052702",
+        "071181",
+        "061878",
+        "021820",
+        "072069",
+        "056205",
+        "077346",
+        "073405",
+        "002449",
+        "076685",
+        "015020",
+        "056342",
+        "067125",
+        "069739",
+        "065127",
+        "065307",
+        "069049",
+        "065387",
+        "063210",
+        "048376",
+        "006842",
+        "073526",
+        "086570",
+        "089959",
+        "048888",
+        "024374",
+        "098965",
+        "033096",
+        "084981",
+        "099064",
+        "020040",
+        "056515",
+        "052609",
+        "019275",
+        "083654",
+        "074696",
+        "003516",
+        "049344",
+        "081803",
+        "006926",
+        "006756",
+        "073784",
+        "076003",
+        "010360",
+        "043608",
+        "013019",
+        "005978",
+        "017699",
+        "052846",
+        "024269",
+        "030546",
+        "050729",
+        "033703",
+        "002648",
+        "055907",
+        "045846",
+        "068921",
+        "040011",
+        "004471",
+        "095429",
+        "092144",
+        "074104",
+        "079773",
+        "080135",
+        "085920",
+        "066880",
+        "072166",
+        "007365",
+        "002770",
+        "078583",
+        "016178",
+        "082393",
+        "049750",
+        "076684",
+        "002656",
+        "031853",
+        "057990",
+        "076640",
+        "018383",
+        "081422",
+        "002669",
+        "074264",
+        "032353",
+        "083595",
+        "000031",
+        "089050",
+        "096245",
+        "086288",
+        "012587",
+        "080304",
+        "067346",
+        "087535",
+        "018234",
+        "017190",
+        "030315",
+        "030050",
+        "033327",
+        "069178",
+        "030370",
+        "052168",
+        "005113",
+        "024179",
+        "020951",
+        "056324",
+        "079285",
+        "083142",
+        "017025",
+        "099439",
+        "092690",
+        "085279",
+        "056799",
+        "037140",
+        "085782",
+        "042545",
+        "041293",
+        "052633",
+        "066955",
+        "074927",
+        "034805",
+        "093214",
+        "003915",
+        "035918",
+        "055216",
+        "099372",
+        "089304",
+        "058993",
+        "060132",
+        "021818",
+        "087161",
+        "059383",
+        "099508",
+        "089468",
+        "092127",
+        "011346",
+        "025675",
+        "039301",
+        "010024",
+        "039769",
+        "006922",
+        "043560",
+        "007286",
+        "067329",
+        "001947",
+        "088234",
+        "035994",
+        "077844",
+        "045673",
+        "028684",
+        "074245",
+        "068739",
+        "085737",
+        "023731",
+        "055858",
+        "006307",
+        "074125",
+        "010628",
+        "051640",
+        "022477",
+        "052454",
+        "030675",
+        "069213",
+        "051097",
+        "013029",
+        "068655",
+        "067620",
+        "041390",
+        "057191",
+        "021601",
+        "007698",
+        "027247",
+        "028416",
+        "002236",
+        "086477",
+        "049261",
+        "022160",
+        "098353",
+        "087257",
+        "097987",
+        "042957",
+        "081163",
+        "008882",
+        "031336",
+        "039772",
+        "061196",
+        "075817",
+        "016748",
+        "021652",
+        "045104",
+        "000605",
+        "066278",
+        "006113",
+        "067658",
+        "047695",
+        "049802",
+        "089065",
+        "022823",
+        "002716",
+        "002393",
+        "080457",
+        "071619",
+        "003992",
+        "050382",
+        "017617",
+        "076477",
+        "040417",
+        "049784",
+        "098981",
+        "023107",
+        "017701",
+        "074679",
+        "001153",
+        "055154",
+        "022534",
+        "045251",
+        "031872",
+        "032116",
+        "010127",
+        "078963",
+        "066012",
+        "045545",
+        "088672",
+        "074006",
+        "094198",
+        "085192",
+        "042761",
+        "061668",
+        "094548",
+        "006304",
+        "033796",
+        "090433",
+        "076483",
+        "065299",
+        "050486",
+        "087656",
+        "020090",
+        "024403",
+        "097279",
+        "070553",
+        "085232",
+        "025194",
+        "004492",
+        "089818",
+        "090592",
+        "095324",
+        "004933",
+        "031074",
+        "038373",
+        "005051",
+        "036666",
+        "054233",
+        "031140",
+        "086163",
+        "025252",
+        "089577",
+        "027503",
+        "003681",
+        "031784",
+        "012328",
+        "009309",
+        "058990",
+        "020114",
+        "091168",
+        "049599",
+        "030557",
+        "052265",
+        "039860",
+        "015260",
+        "066861",
+        "097970",
+        "078432",
+        "001127",
+        "056002",
+        "037341",
+        "044549",
+        "016020",
+        "005430",
+        "033709",
+        "018101",
+        "055899",
+        "038538",
+        "035247",
+        "002304",
+        "072614",
+        "095304",
+        "045069",
+        "038217",
+        "057484",
+        "066347",
+        "042472",
+        "070337",
+        "029445",
+        "006494",
+        "025532",
+        "089375",
+        "080578",
+        "075045",
+        "020111",
+        "054375",
+        "024290",
+        "028250",
+        "019699",
+        "096671",
+        "009673",
+        "008545",
+        "044894",
+        "017675",
+        "000998",
+        "055641",
+        "000755",
+        "060493",
+        "035275",
+        "049969",
+        "032145",
+        "010578",
+        "095055",
+        "045194",
+        "023623",
+        "050936",
+        "078364",
+        "018341",
+        "024811",
+        "037588",
+        "022185",
+        "088222",
+        "075899",
+        "023112",
+        "032318",
+        "071434",
+        "096562",
+        "060380",
+        "085874",
+        "034379",
+        "017698",
+        "068987",
+        "098829",
+        "012178",
+        "077322",
+        "035777",
+        "076777",
+        "001371",
+        "075046",
+        "014045",
+        "014746",
+        "073095",
+        "027896",
+        "001003",
+        "028933",
+        "028803",
+        "012914",
+        "072571",
+        "004917",
+        "021701",
+        "040853",
+        "060251",
+        "021359",
+        "020264",
+        "093759",
+        "075485",
+        "049496",
+        "019700",
+        "053095",
+        "099114",
+        "030902",
+        "072840",
+        "022804",
+        "042206",
+        "014058",
+        "034592",
+        "003093",
+        "061836",
+        "038222",
+        "093170",
+        "087384",
+        "007688",
+        "006434",
+        "052964",
+        "028494",
+        "060099",
+        "012709",
+        "099108",
+        "050842",
+        "064365",
+        "071207",
+        "055747",
+        "057341",
+        "014652",
+        "091228",
+        "071977",
+        "041273",
+        "077134",
+        "095411",
+        "071432",
+        "023764",
+        "086185",
+        "044943",
+        "036863",
+        "089853",
+        "037925",
+        "026906",
+        "049889",
+        "067418",
+        "065451",
+        "023707",
+        "021038",
+        "098392",
+        "000140",
+        "045539",
+        "063749",
+        "067018",
+        "034594",
+        "028366",
+        "032181",
+        "094980",
+        "007065",
+        "011043",
+        "039403",
+        "005075",
+        "024752",
+        "021317",
+        "044061",
+        "000127",
+        "080550",
+        "079921",
+        "072217",
+        "016902",
+        "056739",
+        "073590",
+        "092785",
+        "091952",
+        "017439",
+        "004650",
+        "013366",
+        "050682",
+        "079355",
+        "075784",
+        "059485",
+        "079876",
+        "039212",
+        "028211",
+        "043625",
+        "050604",
+        "070598",
+        "052942",
+        "065535",
+        "046002",
+        "075194",
+        "048987",
+        "048574",
+        "085317",
+        "091661",
+        "036291",
+        "092363",
+        "032336",
+        "088322",
+        "029577",
+        "014234",
+        "003980",
+        "033372",
+        "053789",
+        "000756",
+        "029128",
+        "032543",
+        "056572",
+        "071301",
+        "036924",
+        "027484",
+        "031161",
+        "094632",
+        "063663",
+        "059991",
+        "003029",
+        "000939",
+        "086345",
+        "046391",
+        "053401",
+        "099892",
+        "009211",
+        "032119",
+        "073096",
+        "070151",
+        "064543",
+        "052384",
+        "023045",
+        "096813",
+        "079330",
+        "008275",
+        "085058",
+        "038541",
+        "042156",
+        "030550",
+        "007626",
+        "007974",
+        "053928",
+        "074978",
+        "024607",
+        "056374",
+        "056864",
+        "059397",
+        "018963",
+        "003988",
+        "059147",
+        "097184",
+        "068474",
+        "002553",
+        "051827",
+        "080696",
+        "099494",
+        "081242",
+        "018774",
+        "038286",
+        "028159",
+        "086208",
+        "013909",
+        "068439",
+        "073619",
+        "041162",
+        "076018",
+        "045548",
+        "063534",
+        "004593",
+        "033724",
+        "077549",
+        "037639",
+        "003523",
+        "015609",
+        "052990",
+        "083822",
+        "083523",
+        "049072",
+        "011913",
+        "041793",
+        "072064",
+        "028224",
+        "027404",
+        "067833",
+        "070318",
+        "077960",
+        "042319",
+        "041766",
+        "077407",
+        "067252",
+        "007514",
+        "047826",
+        "021157",
+        "045562",
+        "017502",
+        "059126",
+        "039755",
+        "069618",
+        "017528",
+        "052753",
+        "077339",
+        "068426",
+        "069089",
+        "028992",
+        "010784",
+        "071211",
+        "019588",
+        "082589",
+        "063299",
+        "059408",
+        "044163",
+        "055579",
+        "014476",
+        "024496",
+        "081189",
+        "003900",
+        "002118",
+        "073790",
+        "035369",
+        "023181",
+        "076217",
+        "017327",
+        "037550",
+        "062333",
+        "043109",
+        "043463",
+        "074687",
+        "017883",
+        "068200",
+        "039319",
+        "097826",
+        "021081",
+        "059103",
+        "057947",
+        "053992",
+        "048223",
+        "007652",
+        "054676",
+        "038624",
+        "090617",
+        "030798",
+        "008335",
+        "041555",
+        "071166",
+        "003946",
+        "046859",
+        "013354",
+        "008459",
+        "083611",
+        "051508",
+        "092251",
+        "008283",
+        "014123",
+        "035847",
+        "048882",
+        "055289",
+        "077181",
+        "017679",
+        "098295",
+        "051779",
+        "040585",
+        "006969",
+        "077032",
+        "028540",
+        "007373",
+        "054188",
+        "006674",
+        "082931",
+        "020051",
+        "062465",
+        "019887",
+        "050919",
+        "008102",
+        "055931",
+        "019075",
+        "034607",
+        "019712",
+        "001589",
+        "019145",
+        "042703",
+        "093796",
+        "029810",
+        "013338",
+        "041355",
+        "053850",
+        "024385",
+        "080870",
+        "049817",
+        "013948",
+        "051594",
+        "063727",
+        "001423",
+        "071922",
+        "044343",
+        "000002",
+        "056351",
+        "080328",
+        "045295",
+        "066717",
+        "002484",
+        "064145",
+        "082653",
+        "003940",
+        "072949",
+        "082650",
+        "099777",
+        "036271",
+        "081100",
+        "099319",
+        "000298",
+        "036344",
+        "033467",
+        "078222",
+        "060815",
+        "052185",
+        "067612",
+        "073266",
+        "014383",
+        "010656",
+        "079542",
+        "022499",
+        "021408",
+        "005860",
+        "021955",
+        "039099",
+        "024976",
+        "047995",
+        "098526",
+        "062894",
+        "043267",
+        "023598",
+        "064061",
+        "073208",
+        "049359",
+        "044380",
+        "039348",
+        "067313",
+        "090080",
+        "024633",
+        "019505",
+        "039983",
+        "002859",
+        "065511",
+        "027719",
+        "027999",
+        "075820",
+        "005003",
+        "075367",
+        "088460",
+        "073477",
+        "064256",
+        "026705",
+        "025486",
+        "019572",
+        "049964",
+        "046231",
+        "056239",
+        "016880",
+        "086476",
+        "066395",
+        "087969",
+        "031445",
+        "034391",
+        "026238",
+        "006399",
+        "080485",
+        "037404",
+        "020300",
+        "071294",
+        "093943",
+        "008277",
+        "000469",
+        "045107",
+        "063191",
+        "055537",
+        "082622",
+        "034102",
+        "044478",
+        "094035",
+        "041334",
+        "007329",
+        "090411",
+        "036281",
+        "045393",
+        "032687",
+        "095903",
+        "069572",
+        "020605",
+        "010137",
+        "003023",
+        "009156",
+        "023937",
+        "078730",
+        "038711",
+        "090843",
+        "041735",
+        "015537",
+        "030502",
+        "034451",
+        "020886",
+        "024009",
+        "012462",
+        "080174",
+        "006079",
+        "016183",
+        "071237",
+        "079470",
+        "049418",
+        "018588",
+        "024756",
+        "080776",
+        "065909",
+        "087919",
+        "072031",
+        "057970",
+        "071157",
+        "084806",
+        "052509",
+        "015415",
+        "086402",
+        "031573",
+        "090471",
+        "063802",
+        "040693",
+        "060489",
+        "001275",
+        "097158",
+        "061475",
+        "086095",
+        "059165",
+        "092503",
+        "013724",
+        "023997",
+        "073592",
+        "035415",
+        "083549",
+        "089118",
+        "020677",
+        "085079",
+        "031370",
+        "085828",
+        "024957",
+        "060678",
+        "056801",
+        "086079",
+        "071730",
+        "087182",
+        "017828",
+        "061813",
+        "056389",
+        "018398",
+        "081778",
+        "045180",
+        "055638",
+        "031761",
+        "029720",
+        "054718",
+        "027977",
+        "021105",
+        "022950",
+        "058267",
+        "027172",
+        "048565",
+        "069458",
+        "006615",
+        "000796",
+        "072471",
+        "012639",
+        "097510",
+        "091924",
+        "037153",
+        "034626",
+        "021897",
+        "065831",
+        "008196",
+        "034796",
+        "018765",
+        "004624",
+        "038362",
+        "056506",
+        "019543",
+        "000758",
+        "091669",
+        "082902",
+        "034635",
+        "048301",
+        "051780",
+        "005640",
+        "035500",
+        "004627",
+        "033950",
+        "043963",
+        "055901",
+        "037553",
+        "004157",
+        "087554",
+        "032050",
+        "078228",
+        "053720",
+        "001224",
+        "091497",
+        "038532",
+        "006015",
+        "058738",
+        "052612",
+        "057855",
+        "023111",
+        "015336",
+        "021092",
+        "032968",
+        "049124",
+        "000409",
+        "067342",
+        "072282",
+        "029110",
+        "084297",
+        "000139",
+        "085370",
+        "008487",
+        "066346",
+        "004991",
+        "010715",
+        "012393",
+        "006063",
+        "038089",
+        "061698",
+        "064630",
+        "080317",
+        "081387",
+        "077998",
+        "042566",
+        "075950",
+        "055420",
+        "013228",
+        "021198",
+        "079310",
+        "068367",
+        "084862",
+        "077389",
+        "066176",
+        "029793",
+        "053078",
+        "058116",
+        "018836",
+        "011124",
+        "038540",
+        "081028",
+        "066634",
+        "084017",
+        "051807",
+        "051855",
+        "058597",
+        "025135",
+        "077390",
+        "023410",
+        "096824",
+        "033881",
+        "004596",
+        "046156",
+        "014063",
+        "020158",
+        "038070",
+        "085327",
+        "044911",
+        "037843",
+        "069488",
+        "050620",
+        "079781",
+        "011379",
+        "044012",
+        "034252",
+        "062317",
+        "094081",
+        "084985",
+        "041409",
+        "016400",
+        "061349",
+        "029777",
+        "042960",
+        "086367",
+        "009672",
+        "061256",
+        "097336",
+        "065363",
+        "066106",
+        "056908",
+        "069639",
+        "048250",
+        "038590",
+        "073342",
+        "078498",
+        "008466",
+        "021244",
+        "019608",
+        "017984",
+        "007190",
+        "073600",
+        "065921",
+        "080813",
+        "086737",
+        "018129",
+        "017546",
+        "010368",
+        "040117",
+        "075758",
+        "031877",
+        "057060",
+        "004140",
+        "011473",
+        "019360",
+        "016171",
+        "038490",
+        "080053",
+        "060583",
+        "073223",
+        "038769",
+        "002512",
+        "023578",
+        "016663",
+        "063581",
+        "085203",
+        "036812",
+        "098281",
+        "003115",
+        "087858",
+        "054788",
+        "032147",
+        "069996",
+        "037501",
+        "085581",
+        "019788",
+        "090960",
+        "044666",
+        "055892",
+        "034511",
+        "070725",
+        "025787",
+        "092807",
+        "031780",
+        "092108",
+        "085519",
+        "096288",
+        "096696",
+        "004766",
+        "008120",
+        "071259",
+        "019253",
+        "040707",
+        "021007",
+        "045593",
+        "038533",
+        "009152",
+        "053190",
+        "024758",
+        "077924",
+        "053618",
+        "024042",
+        "027892",
+        "060692",
+        "030098",
+        "028441",
+        "069734",
+        "075522",
+        "049093",
+        "047959",
+        "078219",
+        "009070",
+        "095460",
+        "045031",
+        "093363",
+        "078522",
+        "016239",
+        "081643",
+        "042856",
+        "031058",
+        "032410",
+        "040868",
+        "033339",
+        "031848",
+        "021800",
+        "022069",
+        "088201",
+        "043093",
+        "061927",
+        "021907",
+        "008431",
+        "081336",
+        "021095",
+        "057028",
+        "036525",
+        "052795",
+        "044739",
+        "013073",
+        "021458",
+        "015134",
+        "041144",
+        "011303",
+        "010354",
+        "048780",
+        "095278",
+        "057004",
+        "050637",
+        "028170",
+        "045110",
+        "087962",
+        "020278",
+        "002823",
+        "065174",
+        "018145",
+        "014977",
+        "068896",
+        "090586",
+        "014311",
+        "025766",
+        "008932",
+        "088407",
+        "056215",
+        "032925",
+        "041661",
+        "004998",
+        "045795",
+        "010508",
+        "023154",
+        "057342",
+        "082598",
+        "040802",
+        "004908",
+        "049814",
+        "054218",
+        "028507",
+        "044308",
+        "028977",
+        "034147",
+        "009284",
+        "006052",
+        "021996",
+        "076914",
+        "009960",
+        "015275",
+        "012508",
+        "093944",
+        "077240",
+        "056418",
+        "060604",
+        "078666",
+        "028655",
+        "087913",
+        "053601",
+        "074684",
+        "042261",
+        "065450",
+        "014124",
+        "046618",
+        "009742",
+        "011581",
+        "027440",
+        "096774",
+        "023478",
+        "067520",
+        "093289",
+        "090583",
+        "074367",
+        "030868",
+        "081553",
+        "025537",
+        "029763",
+        "039602",
+        "059932",
+        "068875",
+        "095952",
+        "030657",
+        "082389",
+        "011090",
+        "076834",
+        "013533",
+        "052599",
+        "045901",
+        "002643",
+        "098556",
+        "020665",
+        "009285",
+        "070930",
+        "072333",
+        "007723",
+        "083835",
+        "017065",
+        "085602",
+        "022240",
+        "002967",
+        "072410",
+        "034348",
+        "014126",
+        "098498",
+        "079895",
+        "036220",
+        "053994",
+        "001548",
+        "068999",
+        "004810",
+        "011559",
+        "068161",
+        "078571",
+        "052226",
+        "097282",
+        "060455",
+        "019971",
+        "004154",
+        "018451",
+        "029758",
+        "056729",
+        "077231",
+        "009887",
+        "055710",
+        "009077",
+        "025339",
+        "006346",
+        "063119",
+        "079988",
+        "002470",
+        "078877",
+        "009905",
+        "036131",
+        "007212",
+        "075799",
+        "013857",
+        "050027",
+        "016724",
+        "008015",
+        "054392",
+        "007882",
+        "018990",
+        "062487",
+        "013180",
+        "030899",
+        "067441",
+        "042490",
+        "001447",
+        "003287",
+        "057528",
+        "084619",
+        "044650",
+        "064262",
+        "018995",
+        "038422",
+        "018637",
+        "017879",
+        "009767",
+        "004638",
+        "028164",
+        "019997",
+        "024973",
+        "054243",
+        "094858",
+        "004059",
+        "030037",
+        "055754",
+        "002002",
+        "002966",
+        "004736",
+        "079986",
+        "063943",
+        "059041",
+        "013387",
+        "032547",
+        "005806",
+        "060862",
+        "012418",
+        "003721",
+        "007722",
+        "024791",
+        "026037",
+        "073910",
+        "001214",
+        "008688",
+        "012924",
+        "057404",
+        "017170",
+        "012203",
+        "091868",
+        "044405",
+        "014555",
+        "070331",
+        "021123",
+        "056987",
+        "001083",
+        "070104",
+        "039648",
+        "018727",
+        "036339",
+        "025306",
+        "014043",
+        "026919",
+        "085084",
+        "021918",
+        "026644",
+        "016637",
+        "070597",
+        "015355",
+        "072683",
+        "041720",
+        "030566",
+        "067876",
+        "031088",
+        "028001",
+        "013009",
+        "084228",
+        "036003",
+        "023588",
+        "007883",
+        "095394",
+        "001000",
+        "008740",
+        "027707",
+        "022188",
+        "041257",
+        "097470",
+        "064421",
+        "035691",
+        "070591",
+        "036914",
+        "079105",
+        "019183",
+        "033655",
+        "041474",
+        "008792",
+        "018681",
+        "077150",
+        "054054",
+        "051767",
+        "082952",
+        "049221",
+        "091331",
+        "033387",
+        "026369",
+        "083652",
+        "028120",
+        "047364",
+        "015671",
+        "035704",
+        "060825",
+        "025150",
+        "082079",
+        "018718",
+        "054988",
+        "098974",
+        "034197",
+        "000305",
+        "049648",
+        "053303",
+        "087724",
+        "013003",
+        "028799",
+        "010774",
+        "065023",
+        "010632",
+        "002335",
+        "017268",
+        "091112",
+        "074309",
+        "073527",
+        "091962",
+        "094965",
+        "011484",
+        "060980",
+        "081001",
+        "099465",
+        "094494",
+        "012799",
+        "001156",
+        "053591",
+        "015072",
+        "013269",
+        "021716",
+        "006156",
+        "013653",
+        "002229",
+        "057234",
+        "002266",
+        "073471",
+        "099354",
+        "025612",
+        "006541",
+        "046306",
+        "038245",
+        "049791",
+        "018564",
+        "011892",
+        "078416",
+        "046523",
+        "051681",
+        "027706",
+        "001206",
+        "012454",
+        "053687",
+        "011238",
+        "078645",
+        "036183",
+        "047313",
+        "020763",
+        "006831",
+        "086239",
+        "090579",
+        "020462",
+        "046289",
+        "009886",
+        "021205",
+        "024131",
+        "073355",
+        "066455",
+        "052013",
+        "071291",
+        "054005",
+        "033960",
+        "042885",
+        "073900",
+        "060755"
+      ],
+      "missing_nonempty_scope_queries": []
+    },
+    "random_epoch10_valid": {
+      "file": "coliee_dataset/task1/2026/lht_process/modernBert_scopeFilteredRaw_plus0_emptyExclude/finetune_data/similarity_scores_10_eval_valid.tsv",
+      "rows": 2009194,
+      "query_blocks": 399,
+      "scope_mismatches": 0,
+      "duplicate_rows": 0,
+      "query_ids": [
+        "046310",
+        "036604",
+        "065680",
+        "085278",
+        "042893",
+        "063976",
+        "001720",
+        "024238",
+        "000447",
+        "003865",
+        "024022",
+        "015356",
+        "028399",
+        "031710",
+        "065182",
+        "037691",
+        "022361",
+        "096966",
+        "099706",
+        "021995",
+        "044675",
+        "002961",
+        "028873",
+        "076266",
+        "003844",
+        "038439",
+        "030780",
+        "040324",
+        "016253",
+        "015702",
+        "057489",
+        "044971",
+        "036157",
+        "015210",
+        "007876",
+        "038078",
+        "074753",
+        "059907",
+        "038897",
+        "093286",
+        "092303",
+        "061722",
+        "043329",
+        "011086",
+        "032248",
+        "069353",
+        "025305",
+        "046017",
+        "027423",
+        "033188",
+        "017471",
+        "069675",
+        "083953",
+        "039164",
+        "079672",
+        "073000",
+        "065752",
+        "045595",
+        "031664",
+        "024880",
+        "002314",
+        "046392",
+        "066726",
+        "089432",
+        "055104",
+        "089515",
+        "012796",
+        "028409",
+        "032453",
+        "008855",
+        "078046",
+        "095431",
+        "099551",
+        "030854",
+        "030009",
+        "010800",
+        "057424",
+        "075612",
+        "010207",
+        "072993",
+        "030667",
+        "001299",
+        "067936",
+        "032748",
+        "081606",
+        "097961",
+        "088208",
+        "012534",
+        "003294",
+        "046810",
+        "066617",
+        "081491",
+        "017657",
+        "067386",
+        "060581",
+        "000068",
+        "097067",
+        "065541",
+        "093797",
+        "045064",
+        "065948",
+        "046955",
+        "035718",
+        "068767",
+        "021271",
+        "004266",
+        "068503",
+        "081689",
+        "070222",
+        "080480",
+        "015890",
+        "011546",
+        "062394",
+        "076001",
+        "062243",
+        "000969",
+        "050437",
+        "017722",
+        "040687",
+        "015966",
+        "094902",
+        "096695",
+        "049905",
+        "043298",
+        "026686",
+        "098777",
+        "045981",
+        "057306",
+        "078847",
+        "020740",
+        "037669",
+        "090642",
+        "041466",
+        "028766",
+        "050998",
+        "074090",
+        "071218",
+        "035921",
+        "018270",
+        "099814",
+        "092731",
+        "045465",
+        "030514",
+        "018384",
+        "051820",
+        "082573",
+        "037252",
+        "002277",
+        "023005",
+        "017738",
+        "017895",
+        "000576",
+        "012738",
+        "003595",
+        "019266",
+        "043547",
+        "008866",
+        "086222",
+        "019485",
+        "059852",
+        "040690",
+        "005830",
+        "012111",
+        "073279",
+        "010997",
+        "072198",
+        "009759",
+        "000393",
+        "074582",
+        "031425",
+        "041621",
+        "071931",
+        "067501",
+        "024764",
+        "029499",
+        "039656",
+        "036382",
+        "083956",
+        "074438",
+        "076036",
+        "026714",
+        "006798",
+        "050167",
+        "069849",
+        "050502",
+        "046349",
+        "044839",
+        "040443",
+        "020351",
+        "086750",
+        "082631",
+        "024885",
+        "021891",
+        "046762",
+        "062010",
+        "092809",
+        "027669",
+        "000123",
+        "084237",
+        "032083",
+        "022304",
+        "006766",
+        "003748",
+        "008564",
+        "047834",
+        "027692",
+        "086931",
+        "006433",
+        "043593",
+        "097530",
+        "011976",
+        "031776",
+        "079203",
+        "016618",
+        "073705",
+        "066334",
+        "038374",
+        "045249",
+        "036685",
+        "068905",
+        "036862",
+        "079849",
+        "094886",
+        "018539",
+        "046793",
+        "050208",
+        "065832",
+        "014305",
+        "058297",
+        "061781",
+        "078121",
+        "037710",
+        "024310",
+        "080552",
+        "060950",
+        "021712",
+        "013611",
+        "052878",
+        "014419",
+        "099416",
+        "068423",
+        "079674",
+        "064347",
+        "062202",
+        "012780",
+        "014510",
+        "038786",
+        "075228",
+        "095618",
+        "081113",
+        "026920",
+        "074300",
+        "062618",
+        "042562",
+        "005074",
+        "077678",
+        "025015",
+        "034625",
+        "044200",
+        "084570",
+        "025422",
+        "040929",
+        "084834",
+        "019355",
+        "076011",
+        "027864",
+        "007283",
+        "031892",
+        "072899",
+        "050300",
+        "059224",
+        "080519",
+        "095993",
+        "080737",
+        "062447",
+        "036398",
+        "035114",
+        "032506",
+        "093852",
+        "020165",
+        "015602",
+        "023153",
+        "009774",
+        "045061",
+        "079655",
+        "014882",
+        "094410",
+        "093101",
+        "022946",
+        "084566",
+        "036746",
+        "041762",
+        "014672",
+        "041233",
+        "079472",
+        "045149",
+        "026294",
+        "097104",
+        "009706",
+        "027316",
+        "093861",
+        "015738",
+        "091177",
+        "044593",
+        "009270",
+        "038634",
+        "004258",
+        "032487",
+        "019694",
+        "048696",
+        "079911",
+        "038777",
+        "018728",
+        "023818",
+        "005768",
+        "018290",
+        "005267",
+        "016720",
+        "055693",
+        "078779",
+        "004800",
+        "023744",
+        "004798",
+        "025167",
+        "035983",
+        "046655",
+        "066946",
+        "037515",
+        "092525",
+        "021797",
+        "007844",
+        "052766",
+        "098520",
+        "036069",
+        "046266",
+        "067070",
+        "092904",
+        "015365",
+        "015161",
+        "011298",
+        "031383",
+        "039437",
+        "068986",
+        "067375",
+        "068113",
+        "052474",
+        "068666",
+        "078211",
+        "006667",
+        "031301",
+        "068956",
+        "024429",
+        "014837",
+        "022171",
+        "083279",
+        "050356",
+        "013183",
+        "036387",
+        "073124",
+        "015164",
+        "053848",
+        "068661",
+        "002114",
+        "050237",
+        "079863",
+        "052907",
+        "033823",
+        "065146",
+        "095694",
+        "050424",
+        "049846",
+        "053986",
+        "048137",
+        "043447",
+        "024481",
+        "096647",
+        "098691",
+        "026185",
+        "089811",
+        "031532",
+        "004541",
+        "015327",
+        "011004",
+        "042358",
+        "028359",
+        "042058",
+        "046939",
+        "038130",
+        "030622",
+        "038962",
+        "092064",
+        "061521",
+        "024341",
+        "015055",
+        "057494",
+        "012811",
+        "085841",
+        "010822",
+        "006901"
+      ],
+      "missing_nonempty_scope_queries": [],
+      "full_valid_counts": {
+        "TP": 290,
+        "predictions": 1995,
+        "gold": 1656,
+        "f1": 0.15886058614078336
+      }
+    }
+  },
+  "runs": {
+    "random": {
+      "model_dir": "models/modernBERT_contrastive_random_fp_fp16_scopeFilteredRaw_plus0_emptyExclude_2026",
+      "training_args_sha256": "37808e88318ed3ebebb7ec3d94c3a70b8619c1f2d2f771939d31c7497528f2ec",
+      "checkpoint_states": [
+        {
+          "checkpoint": "checkpoint-1644",
+          "epoch": 1.0,
+          "best_metric": 0.08874281018898933,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 0
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-3288",
+          "epoch": 2.0,
+          "best_metric": 0.1194193371678992,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 0
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-4932",
+          "epoch": 3.0,
+          "best_metric": 0.1320186250342372,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 0
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-6576",
+          "epoch": 4.0,
+          "best_metric": 0.13475760065735418,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 0
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-8220",
+          "epoch": 5.0,
+          "best_metric": 0.14735688852369214,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 0
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-9864",
+          "epoch": 6.0,
+          "best_metric": 0.1495480690221857,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 0
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-11508",
+          "epoch": 7.0,
+          "best_metric": 0.15119145439605586,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 0
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-13152",
+          "epoch": 8.0,
+          "best_metric": 0.15119145439605586,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 1
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-14796",
+          "epoch": 9.0,
+          "best_metric": 0.15119145439605586,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 2
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-16440",
+          "epoch": 10.0,
+          "best_metric": 0.15886058614078336,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 0
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-18084",
+          "epoch": 11.0,
+          "best_metric": 0.15886058614078336,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 1
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-19728",
+          "epoch": 12.0,
+          "best_metric": 0.15886058614078336,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 2
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-21372",
+          "epoch": 13.0,
+          "best_metric": 0.15886058614078336,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 3
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-23016",
+          "epoch": 14.0,
+          "best_metric": 0.15886058614078336,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 4
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-24660",
+          "epoch": 15.0,
+          "best_metric": 0.15886058614078336,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 5
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": true
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-26304",
+          "epoch": 16.0,
+          "best_metric": 0.15886058614078336,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 1
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-27948",
+          "epoch": 17.0,
+          "best_metric": 0.15886058614078336,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 2
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-29592",
+          "epoch": 18.0,
+          "best_metric": 0.15886058614078336,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 3
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-31236",
+          "epoch": 19.0,
+          "best_metric": 0.15886058614078336,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 4
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-32880",
+          "epoch": 20.0,
+          "best_metric": 0.15886058614078336,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 5
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": true
+              },
+              "attributes": {}
+            }
+          }
+        }
+      ],
+      "best_metric": 0.15886058614078336,
+      "tokenizer_sha256": "abf58f8fa056b6f6c5bb0b667af9dd5893bfe96022f8981d6daa7571fdbc830c",
+      "initial_encoder_and_projector_hashes_recorded": false,
+      "best_tensorboard_metrics": {
+        "retrieval/valid_top5_f1": 0.15886057913303375,
+        "retrieval/valid_top5_precision": 0.14536340534687042,
+        "retrieval/valid_top5_recall": 0.1751207709312439
+      },
+      "reconstructed_best_counts": {
+        "TP": 290,
+        "predictions": 1995,
+        "gold_in_saved_evaluation": 1656,
+        "saved_f1_reproduced": 0.15886058614078336,
+        "full_valid_gold": 1656,
+        "f1_with_full_valid_denominator": 0.15886058614078336,
+        "caution": "Count reconstruction from historical metrics and current labels, not checkpoint inference."
+      }
+    },
+    "adaptive": {
+      "model_dir": "models/modernBERT_contrastive_adaptive_fp_fp16_scopeFilteredRaw_plus0_emptyExclude_2026",
+      "training_args_sha256": "ab51a72cbbcdefad2c9311bfdd6d609c2b30e671804a45a865a8651aa4b8dd04",
+      "checkpoint_states": [
+        {
+          "checkpoint": "checkpoint-1644",
+          "epoch": 1.0,
+          "best_metric": 0.09158212229229504,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 0
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-3288",
+          "epoch": 2.0,
+          "best_metric": 0.12284069097888677,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 0
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-4932",
+          "epoch": 3.0,
+          "best_metric": 0.13490540170002743,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 0
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-6576",
+          "epoch": 4.0,
+          "best_metric": 0.14313134082807788,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 0
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-8220",
+          "epoch": 5.0,
+          "best_metric": 0.1502604880723883,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 0
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-9864",
+          "epoch": 6.0,
+          "best_metric": 0.15519605154921853,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 0
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-11508",
+          "epoch": 7.0,
+          "best_metric": 0.16451878256100905,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 0
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-13152",
+          "epoch": 8.0,
+          "best_metric": 0.16451878256100905,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 1
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-14796",
+          "epoch": 9.0,
+          "best_metric": 0.16451878256100905,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 2
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-16440",
+          "epoch": 10.0,
+          "best_metric": 0.16451878256100905,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 3
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-18084",
+          "epoch": 11.0,
+          "best_metric": 0.16451878256100905,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 4
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-19728",
+          "epoch": 12.0,
+          "best_metric": 0.16451878256100905,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 5,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 5
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": true
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-21372",
+          "epoch": 13.0,
+          "best_metric": 0.16451878256100905,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 10,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 1
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        },
+        {
+          "checkpoint": "checkpoint-23016",
+          "epoch": 14.0,
+          "best_metric": 0.16451878256100905,
+          "callbacks": {
+            "EarlyStoppingCallback": {
+              "args": {
+                "early_stopping_patience": 10,
+                "early_stopping_threshold": 0.0
+              },
+              "attributes": {
+                "early_stopping_patience_counter": 2
+              }
+            },
+            "TrainerControl": {
+              "args": {
+                "should_epoch_stop": false,
+                "should_evaluate": false,
+                "should_log": false,
+                "should_save": true,
+                "should_training_stop": false
+              },
+              "attributes": {}
+            }
+          }
+        }
+      ],
+      "best_metric": 0.16451878256100905,
+      "tokenizer_sha256": "abf58f8fa056b6f6c5bb0b667af9dd5893bfe96022f8981d6daa7571fdbc830c",
+      "initial_encoder_and_projector_hashes_recorded": false,
+      "best_tensorboard_metrics": {
+        "retrieval/valid_top5_f1": 0.1645187884569168,
+        "retrieval/valid_top5_precision": 0.15037593245506287,
+        "retrieval/valid_top5_recall": 0.18159806728363037
+      },
+      "reconstructed_best_counts": {
+        "TP": 300,
+        "predictions": 1995,
+        "gold_in_saved_evaluation": 1652,
+        "saved_f1_reproduced": 0.16451878256100905,
+        "full_valid_gold": 1656,
+        "f1_with_full_valid_denominator": 0.16433853738701726,
+        "caution": "Count reconstruction from historical metrics and current labels, not checkpoint inference."
+      }
+    }
+  },
+  "cross_method_pairs_equal": true,
+  "cross_method_row_order_equal": false,
+  "training_arguments": {
+    "__cached__setup_devices": {
+      "random": "cuda:0",
+      "adaptive": "cuda:0",
+      "equal": true
+    },
+    "_n_gpu": {
+      "random": "1",
+      "adaptive": "1",
+      "equal": true
+    },
+    "accelerator_config": {
+      "random": "AcceleratorConfig(split_batches=False, dispatch_batches=None, even_batches=True, use_seedable_sampler=True, non_blocking=False, gradient_accumulation_kwargs=None, use_configured_state=False)",
+      "adaptive": "AcceleratorConfig(split_batches=False, dispatch_batches=None, even_batches=True, use_seedable_sampler=True, non_blocking=False, gradient_accumulation_kwargs=None, use_configured_state=False)",
+      "equal": true
+    },
+    "adafactor": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "adam_beta1": {
+      "random": "0.9",
+      "adaptive": "0.9",
+      "equal": true
+    },
+    "adam_beta2": {
+      "random": "0.999",
+      "adaptive": "0.999",
+      "equal": true
+    },
+    "adam_epsilon": {
+      "random": "1e-08",
+      "adaptive": "1e-08",
+      "equal": true
+    },
+    "auto_find_batch_size": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "average_tokens_across_devices": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "batch_eval_metrics": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "bf16": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "bf16_full_eval": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "data_seed": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "dataloader_drop_last": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "dataloader_num_workers": {
+      "random": "8",
+      "adaptive": "8",
+      "equal": true
+    },
+    "dataloader_persistent_workers": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "dataloader_pin_memory": {
+      "random": "True",
+      "adaptive": "True",
+      "equal": true
+    },
+    "dataloader_prefetch_factor": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "ddp_backend": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "ddp_broadcast_buffers": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "ddp_bucket_cap_mb": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "ddp_find_unused_parameters": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "ddp_timeout": {
+      "random": "1800",
+      "adaptive": "1800",
+      "equal": true
+    },
+    "debug": {
+      "random": "[]",
+      "adaptive": "[]",
+      "equal": true
+    },
+    "deepspeed": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "deepspeed_plugin": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "disable_tqdm": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "do_eval": {
+      "random": "True",
+      "adaptive": "True",
+      "equal": true
+    },
+    "do_predict": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "do_train": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "eval_accumulation_steps": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "eval_delay": {
+      "random": "0",
+      "adaptive": "0",
+      "equal": true
+    },
+    "eval_do_concat_batches": {
+      "random": "True",
+      "adaptive": "True",
+      "equal": true
+    },
+    "eval_on_start": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "eval_steps": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "eval_strategy": {
+      "random": "IntervalStrategy.EPOCH",
+      "adaptive": "IntervalStrategy.EPOCH",
+      "equal": true
+    },
+    "eval_use_gather_object": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "fp16": {
+      "random": "True",
+      "adaptive": "True",
+      "equal": true
+    },
+    "fp16_backend": {
+      "random": "auto",
+      "adaptive": "auto",
+      "equal": true
+    },
+    "fp16_full_eval": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "fp16_opt_level": {
+      "random": "O1",
+      "adaptive": "O1",
+      "equal": true
+    },
+    "fsdp": {
+      "random": "[]",
+      "adaptive": "[]",
+      "equal": true
+    },
+    "fsdp_config": {
+      "random": "{'min_num_params': 0, 'xla': False, 'xla_fsdp_v2': False, 'xla_fsdp_grad_ckpt': False}",
+      "adaptive": "{'min_num_params': 0, 'xla': False, 'xla_fsdp_v2': False, 'xla_fsdp_grad_ckpt': False}",
+      "equal": true
+    },
+    "fsdp_min_num_params": {
+      "random": "0",
+      "adaptive": "0",
+      "equal": true
+    },
+    "fsdp_transformer_layer_cls_to_wrap": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "full_determinism": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "gradient_accumulation_steps": {
+      "random": "4",
+      "adaptive": "4",
+      "equal": true
+    },
+    "gradient_checkpointing": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "gradient_checkpointing_kwargs": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "greater_is_better": {
+      "random": "True",
+      "adaptive": "True",
+      "equal": true
+    },
+    "group_by_length": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "half_precision_backend": {
+      "random": "auto",
+      "adaptive": "auto",
+      "equal": true
+    },
+    "hub_always_push": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "hub_model_id": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "hub_private_repo": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "hub_strategy": {
+      "random": "HubStrategy.EVERY_SAVE",
+      "adaptive": "HubStrategy.EVERY_SAVE",
+      "equal": true
+    },
+    "hub_token": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "ignore_data_skip": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "include_for_metrics": {
+      "random": "['loss']",
+      "adaptive": "['loss']",
+      "equal": true
+    },
+    "include_inputs_for_metrics": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "include_num_input_tokens_seen": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "include_tokens_per_second": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "jit_mode_eval": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "label_names": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "label_smoothing_factor": {
+      "random": "0.0",
+      "adaptive": "0.0",
+      "equal": true
+    },
+    "learning_rate": {
+      "random": "5e-06",
+      "adaptive": "5e-06",
+      "equal": true
+    },
+    "length_column_name": {
+      "random": "length",
+      "adaptive": "length",
+      "equal": true
+    },
+    "load_best_model_at_end": {
+      "random": "True",
+      "adaptive": "True",
+      "equal": true
+    },
+    "local_rank": {
+      "random": "0",
+      "adaptive": "0",
+      "equal": true
+    },
+    "log_level": {
+      "random": "passive",
+      "adaptive": "passive",
+      "equal": true
+    },
+    "log_level_replica": {
+      "random": "warning",
+      "adaptive": "warning",
+      "equal": true
+    },
+    "log_on_each_node": {
+      "random": "True",
+      "adaptive": "True",
+      "equal": true
+    },
+    "logging_dir": {
+      "random": "/home/lab/FLNLP-COLIEE2026/models/modernBERT_contrastive_random_fp_fp16_scopeFilteredRaw_plus0_emptyExclude_2026/tb",
+      "adaptive": "/home/lab/FLNLP-COLIEE2026/models/modernBERT_contrastive_adaptive_fp_fp16_scopeFilteredRaw_2026/tb",
+      "equal": false
+    },
+    "logging_first_step": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "logging_nan_inf_filter": {
+      "random": "True",
+      "adaptive": "True",
+      "equal": true
+    },
+    "logging_steps": {
+      "random": "50",
+      "adaptive": "50",
+      "equal": true
+    },
+    "logging_strategy": {
+      "random": "IntervalStrategy.STEPS",
+      "adaptive": "IntervalStrategy.STEPS",
+      "equal": true
+    },
+    "lr_scheduler_kwargs": {
+      "random": "{}",
+      "adaptive": "{}",
+      "equal": true
+    },
+    "lr_scheduler_type": {
+      "random": "SchedulerType.LINEAR",
+      "adaptive": "SchedulerType.LINEAR",
+      "equal": true
+    },
+    "max_grad_norm": {
+      "random": "1.0",
+      "adaptive": "1.0",
+      "equal": true
+    },
+    "max_steps": {
+      "random": "-1",
+      "adaptive": "-1",
+      "equal": true
+    },
+    "metric_for_best_model": {
+      "random": "eval_global_f1",
+      "adaptive": "eval_global_f1",
+      "equal": true
+    },
+    "mp_parameters": {
+      "random": "",
+      "adaptive": "",
+      "equal": true
+    },
+    "neftune_noise_alpha": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "no_cuda": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "num_train_epochs": {
+      "random": "20.0",
+      "adaptive": "20",
+      "equal": true
+    },
+    "optim": {
+      "random": "OptimizerNames.ADAMW_TORCH_FUSED",
+      "adaptive": "OptimizerNames.ADAMW_TORCH_FUSED",
+      "equal": true
+    },
+    "optim_args": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "optim_target_modules": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "output_dir": {
+      "random": "/home/lab/FLNLP-COLIEE2026/models/modernBERT_contrastive_random_fp_fp16_scopeFilteredRaw_plus0_emptyExclude_2026",
+      "adaptive": "/home/lab/FLNLP-COLIEE2026/models/modernBERT_contrastive_adaptive_fp_fp16_scopeFilteredRaw_2026",
+      "equal": false
+    },
+    "overwrite_output_dir": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "past_index": {
+      "random": "-1",
+      "adaptive": "-1",
+      "equal": true
+    },
+    "per_device_eval_batch_size": {
+      "random": "1",
+      "adaptive": "1",
+      "equal": true
+    },
+    "per_device_train_batch_size": {
+      "random": "1",
+      "adaptive": "1",
+      "equal": true
+    },
+    "per_gpu_eval_batch_size": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "per_gpu_train_batch_size": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "prediction_loss_only": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "push_to_hub": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "push_to_hub_model_id": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "push_to_hub_organization": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "push_to_hub_token": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "ray_scope": {
+      "random": "last",
+      "adaptive": "last",
+      "equal": true
+    },
+    "remove_unused_columns": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "report_to": {
+      "random": "['tensorboard']",
+      "adaptive": "['tensorboard']",
+      "equal": true
+    },
+    "restore_callback_states_from_checkpoint": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "resume_from_checkpoint": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "run_name": {
+      "random": "/home/lab/FLNLP-COLIEE2026/models/modernBERT_contrastive_random_fp_fp16_scopeFilteredRaw_plus0_emptyExclude_2026",
+      "adaptive": "/home/lab/FLNLP-COLIEE2026/models/modernBERT_contrastive_adaptive_fp_fp16_scopeFilteredRaw_2026",
+      "equal": false
+    },
+    "save_on_each_node": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "save_only_model": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "save_safetensors": {
+      "random": "True",
+      "adaptive": "True",
+      "equal": true
+    },
+    "save_steps": {
+      "random": "500",
+      "adaptive": "500",
+      "equal": true
+    },
+    "save_strategy": {
+      "random": "SaveStrategy.EPOCH",
+      "adaptive": "SaveStrategy.EPOCH",
+      "equal": true
+    },
+    "save_total_limit": {
+      "random": "20",
+      "adaptive": "20",
+      "equal": true
+    },
+    "seed": {
+      "random": "42",
+      "adaptive": "42",
+      "equal": true
+    },
+    "skip_memory_metrics": {
+      "random": "True",
+      "adaptive": "True",
+      "equal": true
+    },
+    "temperature_lr": {
+      "random": "0.0005",
+      "adaptive": "0.0005",
+      "equal": true
+    },
+    "tf32": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "torch_compile": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "torch_compile_backend": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "torch_compile_mode": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "torch_empty_cache_steps": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "torchdynamo": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "tpu_metrics_debug": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "tpu_num_cores": {
+      "random": "None",
+      "adaptive": "None",
+      "equal": true
+    },
+    "use_cpu": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "use_ipex": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "use_legacy_prediction_loop": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "use_liger_kernel": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "use_mps_device": {
+      "random": "False",
+      "adaptive": "False",
+      "equal": true
+    },
+    "warmup_ratio": {
+      "random": "0.1",
+      "adaptive": "0.1",
+      "equal": true
+    },
+    "warmup_steps": {
+      "random": "0",
+      "adaptive": "0",
+      "equal": true
+    },
+    "weight_decay": {
+      "random": "0.0",
+      "adaptive": "0.0",
+      "equal": true
+    }
+  },
+  "limitations": [
+    "No per-run immutable encoder/projector initialization, corpus-content or code-revision manifest.",
+    "Shared validation TREC epoch files were overwritten by random run; adaptive best validation TREC is not preserved here.",
+    "Current source constructs random projector before Trainer seeding; historical identical initialization cannot be established.",
+    "Matching historical saved samples does not itself prove that every historical DataLoader consumed those samples.",
+    "Epoch14 adaptive state has patience10 and should_training_stop=false; random latest state has patience5."
+  ],
+  "elapsed_seconds": 25.186429896159098
+}

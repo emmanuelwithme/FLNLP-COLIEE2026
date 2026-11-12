@@ -1,0 +1,36 @@
+{
+  "implementation": "modernBert-fp-bm25-v2",
+  "data_hash": "dada68cdbf9d094ea8e771bae16982c9a18b110e747d5bc1397c1682eb974662",
+  "environment": {
+    "versions": {
+      "torch": "2.6.0+cu126",
+      "transformers": "4.52.4",
+      "accelerate": "1.6.0",
+      "flash-attn": "2.7.4.post1",
+      "tensorboard": "2.20.0"
+    },
+    "gpu": "NVIDIA GeForce RTX 4080 SUPER",
+    "reference_source_sha256": {
+      "fine_tune/fine_tune.py": "c3031b97a28e94309ecb14698c39c4080e94193d296f2a92d57b46846c6234f5",
+      "fine_tune/modernbert_contrastive_model.py": "bf1cb04ea8a3a6360e3322af757d20ba51ad427118c2826f10bbfb3e5cd54fc1"
+    },
+    "python_source_sha256": {
+      "config.py": "d85aecfd3d53c8e5e35a4dc31c9ee30773d9313405b48e0f5c19a2193ab6745a",
+      "find_best_model.py": "37b1fb80992784896bdab88ca648f47ac1f90bbe60852ccea6a8f52ade5fb5f0",
+      "fine_tune/__init__.py": "325a0604b7bdfd944f39a37a2c4d510e8b8619638abaa86823ea59a75f45be31",
+      "fine_tune/data.py": "f803d76cd43dd4e138d4c7dcd1d2846c9c1acf9c58ff69788422140e0d23d127",
+      "fine_tune/fine_tune.py": "e5fa85e1b99d6d531c4b2fb1f051e1da47ce15a6557ecef9b8ecfb4c8de2efca",
+      "fine_tune/modernbert_contrastive_model.py": "1d88919d690136c854cd37a6df123c094e75f0460e322ec1df91facc026adc68",
+      "inference.py": "fb4badbaf31f3b51796d46e2ae601e3603619be8408ca176209be29de3e1cb61",
+      "prepare_data.py": "c7a966c632f55d05f06bbd8532ade9f7d2b4be7233f4cdfd7882c34bcea710b8",
+      "similarity_and_rank.py": "05536d3eb41b104415bf4ad0f25c85b60059dacd34871e30d535f66f52184e58",
+      "tests/test_flow.py": "2e55d088a417aabfc2df7ec129525be3971342b0cd2a22159d9775aac12a88bc",
+      "tests/test_gpu_amp.py": "0397c18e3a9b394b8cbc179c8e41a778803c1f2f92a8751fe9379410984e0743",
+      "tests/test_integration.py": "8e31f9b8874cbaed5d1db36179a041cfbfb68bbfcf8f46f2033f1b34243df1af",
+      "tests/test_training.py": "7912980c5adc181bf5a93657c5d3db485a91383f27a219aa43f74ea8fc13bc06"
+    }
+  },
+  "model_name": "answerdotai/ModernBERT-base",
+  "model_revision": "8949b909ec900327062f0ebf497f51aef5e6f0c8",
+  "note": "Current 2025 snapshot; self negatives corrected; not a resampling-only historical ablation."
+}

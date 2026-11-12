@@ -1,0 +1,18 @@
+{
+  "mode": "formal",
+  "implementation": "modernBert-sailer-gradcache-v2",
+  "best_model_checkpoint": "/home/lab/FLNLP-COLIEE2026/models/modernBERT_bm25_top100_epoch_resample15_sailer_gc_2025/checkpoint-6780",
+  "best_valid_f1": 0.09222831344727507,
+  "last_epoch": 10.0,
+  "global_step": 13560,
+  "epoch0_f1": 0.00838439213157046,
+  "improvement_vs_epoch0": 0.08384392131570462,
+  "observed_max_length": 4096,
+  "amp": {
+    "attempts": 13560,
+    "updates": 13549,
+    "skipped": 11,
+    "consecutive": 0
+  },
+  "data_hash": "dada68cdbf9d094ea8e771bae16982c9a18b110e747d5bc1397c1682eb974662"
+}

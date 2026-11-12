@@ -9,6 +9,7 @@
 - `pre-process/`: raw 檔整理、label split、scope JSON 建立。
 - `lexical models/`: BM25 / QLD 索引與搜尋。
 - `modernBert-fp/`: dense encoder 訓練、embedding 與 ranking。
+- [`modernBert-bm25/`](modernBert-bm25/README.md): 原始 ModernBERT-base 的 COLIEE 2025 實驗，每 epoch 從 BM25 top-100 重抽 15 個負樣本；另支援 [SAILER-style in-batch negatives／Label Mask／GradCache](modernBert-bm25/SAILER_GRADCACHE.md) 與 [四 query 分組驗證](modernBert-bm25/GROUPING.md)。正式與 debug 共用訓練流程，三份 config 隔離 pairwise、v3 與 legacy v2 的輸出及續訓。
 - `lightgbm/`: feature 建立、`LGBMRanker` 訓練、cutoff postprocess。
 - `lcr/`: Task 1 共用模組。
 - `modernBert-fp-chunkAgg/`: chunk aggregation 實驗路線。

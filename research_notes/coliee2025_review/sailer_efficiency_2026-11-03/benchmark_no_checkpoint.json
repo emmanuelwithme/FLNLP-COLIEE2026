@@ -1,0 +1,123 @@
+{
+  "profiles": [
+    {
+      "chunk": 2,
+      "deduplicate_inputs": false,
+      "gradient_checkpointing": true,
+      "model": "answerdotai/ModernBERT-base",
+      "max_length": 4096,
+      "status": "ok",
+      "real_batches": [
+        {
+          "seconds": 5.838162135099992,
+          "loss": 4.112933158874512,
+          "grad_norm": 1.8070322275161743,
+          "peak_allocated_gib": 3.140903949737549,
+          "peak_reserved_gib": 3.220703125,
+          "updates_applied": 1,
+          "unique_documents": 68
+        },
+        {
+          "seconds": 6.149636414134875,
+          "loss": 4.099920272827148,
+          "grad_norm": 1.9916930198669434,
+          "peak_allocated_gib": 3.1410040855407715,
+          "peak_reserved_gib": 3.220703125,
+          "updates_applied": 1,
+          "unique_documents": 68
+        }
+      ],
+      "median_update_seconds": 5.9938992746174335,
+      "full_4096_stress": {
+        "seconds": 7.021388506051153,
+        "loss": 4.164191246032715,
+        "grad_norm": 2.20428466796875,
+        "peak_allocated_gib": 3.141073703765869,
+        "peak_reserved_gib": 3.220703125,
+        "updates_applied": 1,
+        "unique_documents": 68
+      },
+      "safe": true
+    },
+    {
+      "chunk": 2,
+      "deduplicate_inputs": true,
+      "gradient_checkpointing": false,
+      "model": "answerdotai/ModernBERT-base",
+      "max_length": 4096,
+      "status": "ok",
+      "real_batches": [
+        {
+          "seconds": 4.638845680048689,
+          "loss": 4.1129679679870605,
+          "grad_norm": 1.7881782054901123,
+          "peak_allocated_gib": 6.680447101593018,
+          "peak_reserved_gib": 6.7265625,
+          "updates_applied": 1,
+          "unique_documents": 65
+        },
+        {
+          "seconds": 4.8782872329466045,
+          "loss": 4.099853038787842,
+          "grad_norm": 2.42679762840271,
+          "peak_allocated_gib": 6.680663585662842,
+          "peak_reserved_gib": 6.728515625,
+          "updates_applied": 1,
+          "unique_documents": 67
+        }
+      ],
+      "median_update_seconds": 4.758566456497647,
+      "full_4096_stress": {
+        "seconds": 5.577786255860701,
+        "loss": 4.163965225219727,
+        "grad_norm": 2.2068428993225098,
+        "peak_allocated_gib": 6.680823802947998,
+        "peak_reserved_gib": 6.728515625,
+        "updates_applied": 1,
+        "unique_documents": 68
+      },
+      "safe": true
+    },
+    {
+      "chunk": 4,
+      "deduplicate_inputs": true,
+      "gradient_checkpointing": false,
+      "model": "answerdotai/ModernBERT-base",
+      "max_length": 4096,
+      "status": "ok",
+      "real_batches": [
+        {
+          "seconds": 4.708935962989926,
+          "loss": 4.112949848175049,
+          "grad_norm": 1.816336750984192,
+          "peak_allocated_gib": 10.662399768829346,
+          "peak_reserved_gib": 10.83984375,
+          "updates_applied": 1,
+          "unique_documents": 65
+        },
+        {
+          "seconds": 5.13037009187974,
+          "loss": 4.099793910980225,
+          "grad_norm": 2.004349708557129,
+          "peak_allocated_gib": 10.887003421783447,
+          "peak_reserved_gib": 10.9765625,
+          "updates_applied": 1,
+          "unique_documents": 67
+        }
+      ],
+      "median_update_seconds": 4.919653027434833,
+      "full_4096_stress": {
+        "seconds": 5.803539708023891,
+        "loss": 4.164112567901611,
+        "grad_norm": 2.1952006816864014,
+        "peak_allocated_gib": 10.887067317962646,
+        "peak_reserved_gib": 10.9765625,
+        "updates_applied": 1,
+        "unique_documents": 68
+      },
+      "safe": true
+    }
+  ],
+  "recommended_chunk": 2,
+  "note": "GPU update timing excludes data preparation/evaluation; full4096 phase is a memory stress test."
+}

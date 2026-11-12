@@ -1,0 +1,6 @@
+{
+  "python": true,
+  "numpy": true,
+  "cpu": true,
+  "cuda": true
+}

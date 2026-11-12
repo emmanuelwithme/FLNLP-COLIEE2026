@@ -1,0 +1,38 @@
+{
+  "chunk": 24,
+  "deduplicate_inputs": true,
+  "model": "answerdotai/ModernBERT-base",
+  "max_length": 4096,
+  "status": "ok",
+  "real_batches": [
+    {
+      "seconds": 5.8336102610919625,
+      "loss": 4.11290979385376,
+      "grad_norm": 1.8021286725997925,
+      "peak_allocated_gib": 10.05187177658081,
+      "peak_reserved_gib": 10.509765625,
+      "updates_applied": 1,
+      "unique_documents": 65
+    },
+    {
+      "seconds": 6.447408836800605,
+      "loss": 4.099982261657715,
+      "grad_norm": 1.9727927446365356,
+      "peak_allocated_gib": 10.30867862701416,
+      "peak_reserved_gib": 10.607421875,
+      "updates_applied": 1,
+      "unique_documents": 67
+    }
+  ],
+  "median_update_seconds": 6.140509548946284,
+  "full_4096_stress": {
+    "seconds": 7.546765740960836,
+    "loss": 4.164194107055664,
+    "grad_norm": 2.206271171569824,
+    "peak_allocated_gib": 11.706084251403809,
+    "peak_reserved_gib": 12.150390625,
+    "updates_applied": 1,
+    "unique_documents": 68
+  },
+  "safe": false
+}

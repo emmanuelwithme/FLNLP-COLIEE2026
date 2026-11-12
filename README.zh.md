@@ -22,11 +22,14 @@ conda activate FLNLP-COLIEE2026-WSL
 - 將資料路徑、模型路徑與執行參數放在 `.env`。
 - 若只想單次覆寫，可在命令前加 shell 環境變數，優先於 `.env`。
 - 共用模型目錄放在 `models/`。
+- 隔離的 `modernBert-bm25` COLIEE 2025 實驗使用自己的 JSON config，不讀根目錄 `.env`。
 
 3. 選擇任務流程。
 
 - Task 1 前處理: `bash run_pre_finetune.sh`
 - Task 1 dense 訓練: `python "Legal Case Retrieval/modernBert-fp/fine_tune/fine_tune.py"`
+- Task 1 BM25 每 epoch 重抽實驗: `python -u "Legal Case Retrieval/modernBert-bm25/fine_tune/fine_tune.py" --no-debug`
+- Task 1 BM25＋SAILER-style in-batch negatives／GradCache: `python -u "Legal Case Retrieval/modernBert-bm25/fine_tune/fine_tune_sailer.py" --no-debug`
 - Task 1 dense embeddings: `python "Legal Case Retrieval/modernBert-fp/inference.py"`
 - Task 1 train/valid ranking: `python "Legal Case Retrieval/modernBert-fp/similarity_and_rank.py"`
 - Task 1 評估: `python "Legal Case Retrieval/utils/eval.py"`
@@ -39,6 +42,8 @@ conda activate FLNLP-COLIEE2026-WSL
 - 環境設定: [ENVIRONMENT.md](ENVIRONMENT.md)
 - Task 1 總覽: [Legal Case Retrieval/README.md](Legal%20Case%20Retrieval/README.md)
 - Task 1 dense retrieval: [Legal Case Retrieval/modernBert-fp/README.md](Legal%20Case%20Retrieval/modernBert-fp/README.md)
+- Task 1 原始 ModernBERT-base、BM25 top-100 每 epoch 抽 15: [操作說明](Legal%20Case%20Retrieval/modernBert-bm25/README.md)｜[SAILER-style GradCache](Legal%20Case%20Retrieval/modernBert-bm25/SAILER_GRADCACHE.md)｜[分組驗證](Legal%20Case%20Retrieval/modernBert-bm25/GROUPING.md)
+- COLIEE 實驗稽核與歷史驗證: [研究紀錄](research_notes/coliee2025_review/README.md)
 - Task 1 ChunkAgg v5: [Legal Case Retrieval/modernBert-fp-chunkAgg/README.md](Legal%20Case%20Retrieval/modernBert-fp-chunkAgg/README.md)
 - Task 1 ChunkAgg v6: [Legal Case Retrieval/modernBert-fp-chunkAgg-v6/README.md](Legal%20Case%20Retrieval/modernBert-fp-chunkAgg-v6/README.md)
 - Task 1 LightGBM rerank: [Legal Case Retrieval/lightgbm/README.md](Legal%20Case%20Retrieval/lightgbm/README.md)

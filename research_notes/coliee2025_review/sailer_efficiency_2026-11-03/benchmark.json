@@ -1,0 +1,243 @@
+{
+  "profiles": [
+    {
+      "chunk": 2,
+      "deduplicate_inputs": false,
+      "model": "answerdotai/ModernBERT-base",
+      "max_length": 4096,
+      "status": "ok",
+      "real_batches": [
+        {
+          "seconds": 5.816069561988115,
+          "loss": 4.112929821014404,
+          "grad_norm": 1.8068628311157227,
+          "peak_allocated_gib": 3.140903949737549,
+          "peak_reserved_gib": 3.220703125,
+          "updates_applied": 1,
+          "unique_documents": 68
+        },
+        {
+          "seconds": 6.25219392310828,
+          "loss": 4.099895477294922,
+          "grad_norm": 1.969788908958435,
+          "peak_allocated_gib": 3.1410040855407715,
+          "peak_reserved_gib": 3.220703125,
+          "updates_applied": 1,
+          "unique_documents": 68
+        }
+      ],
+      "median_update_seconds": 6.0341317425481975,
+      "full_4096_stress": {
+        "seconds": 7.107571474974975,
+        "loss": 4.1640167236328125,
+        "grad_norm": 2.195392370223999,
+        "peak_allocated_gib": 3.141073703765869,
+        "peak_reserved_gib": 3.220703125,
+        "updates_applied": 1,
+        "unique_documents": 68
+      },
+      "safe": true
+    },
+    {
+      "chunk": 2,
+      "deduplicate_inputs": true,
+      "model": "answerdotai/ModernBERT-base",
+      "max_length": 4096,
+      "status": "ok",
+      "real_batches": [
+        {
+          "seconds": 5.64670092985034,
+          "loss": 4.112957000732422,
+          "grad_norm": 1.7940120697021484,
+          "peak_allocated_gib": 3.1406970024108887,
+          "peak_reserved_gib": 3.220703125,
+          "updates_applied": 1,
+          "unique_documents": 65
+        },
+        {
+          "seconds": 6.180795312859118,
+          "loss": 4.099880218505859,
+          "grad_norm": 1.9437323808670044,
+          "peak_allocated_gib": 3.140913486480713,
+          "peak_reserved_gib": 3.220703125,
+          "updates_applied": 1,
+          "unique_documents": 67
+        }
+      ],
+      "median_update_seconds": 5.913748121354729,
+      "full_4096_stress": {
+        "seconds": 7.1046361608896405,
+        "loss": 4.163943767547607,
+        "grad_norm": 2.151603937149048,
+        "peak_allocated_gib": 3.141073703765869,
+        "peak_reserved_gib": 3.220703125,
+        "updates_applied": 1,
+        "unique_documents": 68
+      },
+      "safe": true
+    },
+    {
+      "chunk": 4,
+      "deduplicate_inputs": true,
+      "model": "answerdotai/ModernBERT-base",
+      "max_length": 4096,
+      "status": "ok",
+      "real_batches": [
+        {
+          "seconds": 5.833473019069061,
+          "loss": 4.1130218505859375,
+          "grad_norm": 1.8127318620681763,
+          "peak_allocated_gib": 3.8056931495666504,
+          "peak_reserved_gib": 3.96484375,
+          "updates_applied": 1,
+          "unique_documents": 65
+        },
+        {
+          "seconds": 6.440460128011182,
+          "loss": 4.0998029708862305,
+          "grad_norm": 1.9887505769729614,
+          "peak_allocated_gib": 3.848297119140625,
+          "peak_reserved_gib": 4.04296875,
+          "updates_applied": 1,
+          "unique_documents": 67
+        }
+      ],
+      "median_update_seconds": 6.136966573540121,
+      "full_4096_stress": {
+        "seconds": 7.42629688908346,
+        "loss": 4.164270401000977,
+        "grad_norm": 2.2286205291748047,
+        "peak_allocated_gib": 3.848361015319824,
+        "peak_reserved_gib": 4.04296875,
+        "updates_applied": 1,
+        "unique_documents": 68
+      },
+      "safe": true
+    },
+    {
+      "chunk": 8,
+      "deduplicate_inputs": true,
+      "model": "answerdotai/ModernBERT-base",
+      "max_length": 4096,
+      "status": "ok",
+      "real_batches": [
+        {
+          "seconds": 5.973382007796317,
+          "loss": 4.112964630126953,
+          "grad_norm": 1.7817785739898682,
+          "peak_allocated_gib": 5.197076797485352,
+          "peak_reserved_gib": 5.390625,
+          "updates_applied": 1,
+          "unique_documents": 65
+        },
+        {
+          "seconds": 6.534662171965465,
+          "loss": 4.099682807922363,
+          "grad_norm": 2.674633741378784,
+          "peak_allocated_gib": 5.419841766357422,
+          "peak_reserved_gib": 5.625,
+          "updates_applied": 1,
+          "unique_documents": 67
+        }
+      ],
+      "median_update_seconds": 6.254022089880891,
+      "full_4096_stress": {
+        "seconds": 7.621610973030329,
+        "loss": 4.164029598236084,
+        "grad_norm": 2.124624490737915,
+        "peak_allocated_gib": 5.419905662536621,
+        "peak_reserved_gib": 5.625,
+        "updates_applied": 1,
+        "unique_documents": 68
+      },
+      "safe": true
+    },
+    {
+      "chunk": 16,
+      "deduplicate_inputs": true,
+      "model": "answerdotai/ModernBERT-base",
+      "max_length": 4096,
+      "status": "ok",
+      "real_batches": [
+        {
+          "seconds": 5.840608373051509,
+          "loss": 4.112950801849365,
+          "grad_norm": 1.7917248010635376,
+          "peak_allocated_gib": 7.670079231262207,
+          "peak_reserved_gib": 7.94921875,
+          "updates_applied": 1,
+          "unique_documents": 65
+        },
+        {
+          "seconds": 6.4196673091501,
+          "loss": 4.099881172180176,
+          "grad_norm": 1.987582802772522,
+          "peak_allocated_gib": 8.514399528503418,
+          "peak_reserved_gib": 8.90625,
+          "updates_applied": 1,
+          "unique_documents": 67
+        }
+      ],
+      "median_update_seconds": 6.1301378411008045,
+      "full_4096_stress": {
+        "seconds": 7.406930983997881,
+        "loss": 4.163976669311523,
+        "grad_norm": 2.170959234237671,
+        "peak_allocated_gib": 8.562994956970215,
+        "peak_reserved_gib": 8.90625,
+        "updates_applied": 1,
+        "unique_documents": 68
+      },
+      "safe": true
+    },
+    {
+      "chunk": 24,
+      "deduplicate_inputs": true,
+      "model": "answerdotai/ModernBERT-base",
+      "max_length": 4096,
+      "status": "ok",
+      "real_batches": [
+        {
+          "seconds": 5.8336102610919625,
+          "loss": 4.11290979385376,
+          "grad_norm": 1.8021286725997925,
+          "peak_allocated_gib": 10.05187177658081,
+          "peak_reserved_gib": 10.509765625,
+          "updates_applied": 1,
+          "unique_documents": 65
+        },
+        {
+          "seconds": 6.447408836800605,
+          "loss": 4.099982261657715,
+          "grad_norm": 1.9727927446365356,
+          "peak_allocated_gib": 10.30867862701416,
+          "peak_reserved_gib": 10.607421875,
+          "updates_applied": 1,
+          "unique_documents": 67
+        }
+      ],
+      "median_update_seconds": 6.140509548946284,
+      "full_4096_stress": {
+        "seconds": 7.546765740960836,
+        "loss": 4.164194107055664,
+        "grad_norm": 2.206271171569824,
+        "peak_allocated_gib": 11.706084251403809,
+        "peak_reserved_gib": 12.150390625,
+        "updates_applied": 1,
+        "unique_documents": 68
+      },
+      "safe": false
+    },
+    {
+      "chunk": 32,
+      "deduplicate_inputs": true,
+      "gradient_checkpointing": true,
+      "status": "cuda_error",
+      "safe": false,
+      "error": "CUDA driver error: device not ready",
+      "note": "Observed in first benchmark; not selected; no completed memory measurement."
+    }
+  ],
+  "note": "GPU update timing excludes data preparation/evaluation; full4096 phase is a memory stress test.",
+  "recommended_chunk": 2
+}

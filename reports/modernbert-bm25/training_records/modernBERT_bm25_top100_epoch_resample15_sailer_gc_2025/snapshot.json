@@ -1,0 +1,46 @@
+{
+  "export_date": "2026-11-12",
+  "timezone": "Asia/Taipei",
+  "source_run": "models/modernBERT_bm25_top100_epoch_resample15_sailer_gc_2025",
+  "purpose": "Lightweight historical training records; not a resumable model checkpoint.",
+  "copied_files": {
+    "summary.json": {
+      "source": "models/modernBERT_bm25_top100_epoch_resample15_sailer_gc_2025/summary.json",
+      "bytes": 597,
+      "sha256": "17399dc619258ab7db1a5e4f56bb08e4588334cc087a54862198ebeb0a21175a"
+    },
+    "metrics_history.json": {
+      "source": "models/modernBERT_bm25_top100_epoch_resample15_sailer_gc_2025/metrics_history.json",
+      "bytes": 5953,
+      "sha256": "6fe4468ccab7b68f1846d00b6b27554c818edbe89bbba9e521981dc4793aa414"
+    },
+    "run_config.json": {
+      "source": "models/modernBERT_bm25_top100_epoch_resample15_sailer_gc_2025/run_config.json",
+      "bytes": 1932,
+      "sha256": "dbabefa71ba27df3453199ff9dd7c322b548694e1d2f1ef6d1b925f86fccab47"
+    },
+    "run_manifest.json": {
+      "source": "models/modernBERT_bm25_top100_epoch_resample15_sailer_gc_2025/run_manifest.json",
+      "bytes": 2776,
+      "sha256": "d6b4ee0368e43a166a3c5efe2965ccae00446a2b87dddf148426d3779f6b2862"
+    },
+    "tb/events.out.tfevents.1793653311.DESKTOP-815S0TB.2544549.0": {
+      "source": "models/modernBERT_bm25_top100_epoch_resample15_sailer_gc_2025/tb/events.out.tfevents.1793653311.DESKTOP-815S0TB.2544549.0",
+      "bytes": 333676,
+      "sha256": "679b4b65ffa6767d5afb55caddf9c05c17b69f2a25292cf3f198765acfe20a5f"
+    }
+  },
+  "sampling_audit_sources": [
+    "models/modernBERT_bm25_top100_epoch_resample15_sailer_gc_2025/sampling/epoch_01_train.audit.json",
+    "models/modernBERT_bm25_top100_epoch_resample15_sailer_gc_2025/sampling/epoch_02_train.audit.json",
+    "models/modernBERT_bm25_top100_epoch_resample15_sailer_gc_2025/sampling/epoch_03_train.audit.json",
+    "models/modernBERT_bm25_top100_epoch_resample15_sailer_gc_2025/sampling/epoch_04_train.audit.json",
+    "models/modernBERT_bm25_top100_epoch_resample15_sailer_gc_2025/sampling/epoch_05_train.audit.json",
+    "models/modernBERT_bm25_top100_epoch_resample15_sailer_gc_2025/sampling/epoch_06_train.audit.json",
+    "models/modernBERT_bm25_top100_epoch_resample15_sailer_gc_2025/sampling/epoch_07_train.audit.json",
+    "models/modernBERT_bm25_top100_epoch_resample15_sailer_gc_2025/sampling/epoch_08_train.audit.json",
+    "models/modernBERT_bm25_top100_epoch_resample15_sailer_gc_2025/sampling/epoch_09_train.audit.json",
+    "models/modernBERT_bm25_top100_epoch_resample15_sailer_gc_2025/sampling/epoch_10_train.audit.json"
+  ],
+  "excluded": "Model weights, optimizer, scheduler, scaler, RNG, debug runs, full sampled datasets, rankings, embeddings and per-parameter gradient TensorBoard extras."
+}

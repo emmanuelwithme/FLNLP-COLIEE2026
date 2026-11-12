@@ -1,0 +1,42 @@
+{
+  "export_date": "2026-11-12",
+  "timezone": "Asia/Taipei",
+  "source_run": "models/modernBERT_bm25_top100_epoch_resample15_2025",
+  "purpose": "Lightweight historical training records; not a resumable model checkpoint.",
+  "copied_files": {
+    "summary.json": {
+      "source": "models/modernBERT_bm25_top100_epoch_resample15_2025/summary.json",
+      "bytes": 559,
+      "sha256": "c4093fd4450eb97b8410604d4d126cb151665104225b6cbf29d46046a8bfe527"
+    },
+    "metrics_history.json": {
+      "source": "models/modernBERT_bm25_top100_epoch_resample15_2025/metrics_history.json",
+      "bytes": 3793,
+      "sha256": "fd89d0e8cc024e5dbc1585a8e564c3c00649697bee465c6e1bf966bbcaa4d1f4"
+    },
+    "run_config.json": {
+      "source": "models/modernBERT_bm25_top100_epoch_resample15_2025/run_config.json",
+      "bytes": 1795,
+      "sha256": "11416057cc4ace512533123dd1c44f1a8c7a4b7f69d26825a860f3359974cd51"
+    },
+    "run_manifest.json": {
+      "source": "models/modernBERT_bm25_top100_epoch_resample15_2025/run_manifest.json",
+      "bytes": 2166,
+      "sha256": "f139d35f6019fca994df94770d0f6e876ffd5cc46409aaf1dbe1d3c1a5eaa75f"
+    },
+    "tb/events.out.tfevents.1792453358.DESKTOP-815S0TB.2209023.0": {
+      "source": "models/modernBERT_bm25_top100_epoch_resample15_2025/tb/events.out.tfevents.1792453358.DESKTOP-815S0TB.2209023.0",
+      "bytes": 116229,
+      "sha256": "d1065f88bc88939504846a596e2f5c7b08faf46535add9fb5061343e9ec4bfc5"
+    }
+  },
+  "sampling_audit_sources": [
+    "models/modernBERT_bm25_top100_epoch_resample15_2025/sampling/epoch_01_train.audit.json",
+    "models/modernBERT_bm25_top100_epoch_resample15_2025/sampling/epoch_02_train.audit.json",
+    "models/modernBERT_bm25_top100_epoch_resample15_2025/sampling/epoch_03_train.audit.json",
+    "models/modernBERT_bm25_top100_epoch_resample15_2025/sampling/epoch_04_train.audit.json",
+    "models/modernBERT_bm25_top100_epoch_resample15_2025/sampling/epoch_05_train.audit.json",
+    "models/modernBERT_bm25_top100_epoch_resample15_2025/sampling/epoch_06_train.audit.json"
+  ],
+  "excluded": "Model weights, optimizer, scheduler, scaler, RNG, debug runs, full sampled datasets, rankings, embeddings and per-parameter gradient TensorBoard extras."
+}
